@@ -131,6 +131,15 @@ function init() {
                 .then(reg => console.log('SW Registered', reg))
                 .catch(err => console.log('SW Registration failed', err));
         });
+
+        // Auto-reload when new Service Worker takes over
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                window.location.reload();
+                refreshing = true;
+            }
+        });
     }
 }
 
