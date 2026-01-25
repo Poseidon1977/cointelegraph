@@ -415,15 +415,14 @@ async function fetchPrices() {
 }
 
 async function fetchStocks() {
-    const queue = [...config.stockSymbols];
-    await Promise.all(queue.map(async (stock) => {
+    const symbols = [...config.stockSymbols];
+    for (const stock of symbols) {
         try {
             const res = await fetch(`/api/quote?symbol=${stock.id}`);
             const data = await res.json();
 
-            // Fetch candles for sparkline (wider range for weekends)
             const to = Math.floor(Date.now() / 1000);
-            const from = to - (7 * 24 * 3600); // 7 days back
+            const from = to - (7 * 24 * 3600);
             const candleRes = await fetch(`/api/candles?symbol=${stock.id}&resolution=60&from=${from}&to=${to}&type=stock`);
             const candleData = await candleRes.json();
 
@@ -434,8 +433,9 @@ async function fetchStocks() {
                 percentChange: data.dp,
                 sparkline: (candleData.s === 'ok') ? candleData.c.slice(-24) : []
             };
-        } catch (e) { }
-    }));
+            await new Promise(r => setTimeout(r, 200)); // 200ms delay between assets
+        } catch (e) { console.error(`Stock fetch failed for ${stock.id}`, e); }
+    }
     renderGrid(state.stocks, stocksGrid, false);
 }
 
@@ -443,7 +443,7 @@ async function fetchCommodities() {
     const queue = config.commoditySymbols.filter(c => !c.virtual);
     const virtuals = config.commoditySymbols.filter(c => c.virtual);
 
-    await Promise.all(queue.map(async (com) => {
+    for (const com of queue) {
         try {
             const res = await fetch(`/api/quote?symbol=${com.id}`);
             const data = await res.json();
@@ -460,8 +460,9 @@ async function fetchCommodities() {
                 percentChange: data.dp,
                 sparkline: (candleData.s === 'ok') ? candleData.c.slice(-24) : []
             };
+            await new Promise(r => setTimeout(r, 200));
         } catch (e) { }
-    }));
+    }
 
     // Calculate Virtual Localized Prices
     const spotGold = state.commodities['GLD']?.price || 0;
@@ -538,14 +539,13 @@ async function fetchCommodities() {
 
 async function fetchForex() {
     const queue = [...config.forexSymbols];
-    await Promise.all(queue.map(async (fx) => {
+    for (const fx of queue) {
         try {
             const res = await fetch(`/api/quote?symbol=${fx.id}`);
             const data = await res.json();
 
-            // resolution '60' means hourly candles, wider range for weekends
             const to = Math.floor(Date.now() / 1000);
-            const from = to - (7 * 24 * 3600); // 7 days back
+            const from = to - (7 * 24 * 3600);
             const candleRes = await fetch(`/api/candles?symbol=${fx.id}&resolution=60&from=${from}&to=${to}&type=forex`);
             const candleData = await candleRes.json();
 
@@ -556,8 +556,9 @@ async function fetchForex() {
                 percentChange: data.dp,
                 sparkline: (candleData.s === 'ok') ? candleData.c.slice(-24) : []
             };
+            await new Promise(r => setTimeout(r, 200));
         } catch (e) { }
-    }));
+    }
     renderGrid(state.forex, forexGrid, false);
 }
 

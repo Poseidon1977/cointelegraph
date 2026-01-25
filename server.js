@@ -22,6 +22,19 @@ app.use((req, res, next) => {
 app.use(express.static('./')); // Serve frontend files
 
 const FINNHUB_KEY = process.env.FINNHUB_API_KEY;
+const cache = new Map();
+const CACHE_TTL = 30000; // 30 seconds for prices/candles
+const NEWS_TTL = 300000; // 5 minutes for news
+
+function getCached(key, ttl) {
+    const entry = cache.get(key);
+    if (entry && (Date.now() - entry.timestamp < ttl)) return entry.data;
+    return null;
+}
+
+function setCache(key, data) {
+    cache.set(key, { data, timestamp: Date.now() });
+}
 
 if (!FINNHUB_KEY) {
     console.error('CRITICAL ERROR: FINNHUB_API_KEY is not defined in environment variables.');
@@ -32,19 +45,29 @@ if (!FINNHUB_KEY) {
 app.get('/api/quote', async (req, res) => {
     try {
         const { symbol } = req.query;
+        const cacheKey = `quote_${symbol}`;
+        const cached = getCached(cacheKey, CACHE_TTL);
+        if (cached) return res.json(cached);
+
         const response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
+        setCache(cacheKey, response.data);
         res.json(response.data);
     } catch (error) {
         console.error('API Error (/api/quote):', error.message);
-        res.status(500).json({ error: error.message, detail: 'Check FINNHUB_API_KEY' });
+        res.status(500).json({ error: error.message });
     }
 });
 
 app.get('/api/candles', async (req, res) => {
     try {
         const { symbol, resolution, from, to, type } = req.query;
+        const cacheKey = `candles_${symbol}_${resolution}_${from}_${to}`;
+        const cached = getCached(cacheKey, CACHE_TTL);
+        if (cached) return res.json(cached);
+
         const endpoint = type === 'forex' ? 'forex/candle' : 'stock/candle';
         const response = await axios.get(`https://finnhub.io/api/v1/${endpoint}?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${FINNHUB_KEY}`);
+        setCache(cacheKey, response.data);
         res.json(response.data);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -54,7 +77,12 @@ app.get('/api/candles', async (req, res) => {
 app.get('/api/news', async (req, res) => {
     try {
         const { category } = req.query;
+        const cacheKey = `news_${category}`;
+        const cached = getCached(cacheKey, NEWS_TTL);
+        if (cached) return res.json(cached);
+
         const response = await axios.get(`https://finnhub.io/api/v1/news?category=${category}&token=${FINNHUB_KEY}`);
+        setCache(cacheKey, response.data);
         res.json(response.data);
     } catch (error) {
         res.status(500).json({ error: error.message });
