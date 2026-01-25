@@ -113,12 +113,14 @@ function init() {
     setupConverter();
     updateDateTime();
     initWebSocket();
-    fetchGlobalNews(); // Render initial news
-    fetchPrices();
-    fetchStocks();
-    fetchCommodities();
-    fetchForex();
-    fetchExchangeRates(); // New for converter
+    Promise.all([
+        fetchExchangeRates(),
+        fetchPrices(),
+        fetchStocks(),
+        fetchCommodities(),
+        fetchForex(),
+        fetchGlobalNews()
+    ]).catch(err => console.error('Initial fetch failed:', err));
 
     setInterval(fetchPrices, 20000);
     setInterval(fetchStocks, 60000);
@@ -452,34 +454,36 @@ async function fetchCommodities() {
     const tryRate = state.exchangeRates?.TRY || 0;
     const uahRate = state.exchangeRates?.UAH || 0;
 
-    if (spotGold && tryRate && goldSpark.length > 0) {
+    if (spotGold && tryRate) {
         const gramGoldUSD = spotGold / 31.1035;
         const prices = { '24K': 1, '22K': 0.916, '18K': 0.750, '14K': 0.585 };
         const scaleFactor = tryRate / 31.1035;
+        const goldChange = state.commodities['GLD']?.change || 0;
+        const goldPct = state.commodities['GLD']?.percentChange || 0;
 
         state.commodities['TR_GOLD_24K'] = {
             ...virtuals.find(v => v.id === 'TR_GOLD_24K'),
             price: gramGoldUSD * tryRate * prices['24K'],
             currency: '₺',
             sparkline: goldSpark.map(v => v * scaleFactor * prices['24K']),
-            change: state.commodities['GLD'].change * scaleFactor * prices['24K'],
-            percentChange: state.commodities['GLD'].percentChange
+            change: goldChange * scaleFactor * prices['24K'],
+            percentChange: goldPct
         };
         state.commodities['TR_GOLD_22K'] = {
             ...virtuals.find(v => v.id === 'TR_GOLD_22K'),
             price: gramGoldUSD * tryRate * prices['22K'],
             currency: '₺',
             sparkline: goldSpark.map(v => v * scaleFactor * prices['22K']),
-            change: state.commodities['GLD'].change * scaleFactor * prices['22K'],
-            percentChange: state.commodities['GLD'].percentChange
+            change: goldChange * scaleFactor * prices['22K'],
+            percentChange: goldPct
         };
         state.commodities['TR_GOLD_14K'] = {
             ...virtuals.find(v => v.id === 'TR_GOLD_14K'),
             price: gramGoldUSD * tryRate * prices['14K'],
             currency: '₺',
             sparkline: goldSpark.map(v => v * scaleFactor * prices['14K']),
-            change: state.commodities['GLD'].change * scaleFactor * prices['14K'],
-            percentChange: state.commodities['GLD'].percentChange
+            change: goldChange * scaleFactor * prices['14K'],
+            percentChange: goldPct
         };
 
         if (uahRate) {
@@ -489,29 +493,32 @@ async function fetchCommodities() {
                 price: gramGoldUSD * uahRate * prices['24K'],
                 currency: '₴',
                 sparkline: goldSpark.map(v => v * uahScale * prices['24K']),
-                change: state.commodities['GLD'].change * uahScale * prices['24K'],
-                percentChange: state.commodities['GLD'].percentChange
+                change: goldChange * uahScale * prices['24K'],
+                percentChange: goldPct
             };
             state.commodities['UA_GOLD_18K'] = {
                 ...virtuals.find(v => v.id === 'UA_GOLD_18K'),
                 price: gramGoldUSD * uahRate * prices['18K'],
                 currency: '₴',
                 sparkline: goldSpark.map(v => v * uahScale * prices['18K']),
-                change: state.commodities['GLD'].change * uahScale * prices['18K'],
-                percentChange: state.commodities['GLD'].percentChange
+                change: goldChange * uahScale * prices['18K'],
+                percentChange: goldPct
             };
         }
     }
 
-    if (spotSilver && tryRate && silverSpark.length > 0) {
+    if (spotSilver && tryRate) {
         const silverScale = tryRate / 31.1035;
+        const silverChange = state.commodities['SLV']?.change || 0;
+        const silverPct = state.commodities['SLV']?.percentChange || 0;
+
         state.commodities['TR_SILVER'] = {
             ...virtuals.find(v => v.id === 'TR_SILVER'),
             price: (spotSilver / 31.1035) * tryRate,
             currency: '₺',
             sparkline: silverSpark.map(v => v * silverScale),
-            change: state.commodities['SLV'].change * silverScale,
-            percentChange: state.commodities['SLV'].percentChange
+            change: silverChange * silverScale,
+            percentChange: silverPct
         };
         if (uahRate) {
             const uaSilverScale = uahRate / 31.1035;
@@ -520,8 +527,8 @@ async function fetchCommodities() {
                 price: (spotSilver / 31.1035) * uahRate,
                 currency: '₴',
                 sparkline: silverSpark.map(v => v * uaSilverScale),
-                change: state.commodities['SLV'].change * uaSilverScale,
-                percentChange: state.commodities['SLV'].percentChange
+                change: silverChange * uaSilverScale,
+                percentChange: silverPct
             };
         }
     }
@@ -589,10 +596,10 @@ function renderCard(item, container, isCrypto) {
                 </div>
             </div>
             <div class="change-badge ${(isUp || !item.change) ? 'change-up' : 'change-down'}">
-                ${(isUp || !item.change) ? '+' : ''}${item.percentChange ? item.percentChange.toFixed(1) : '0'}%
+                ${(isUp || !item.change) ? '+' : ''}${item.percentChange ? Number(item.percentChange).toFixed(1) : '0'}%
             </div>
         </div>
-        <div class="coin-price">${item.currency || '$'}${item.price ? item.price.toFixed(item.price < 1 ? 4 : 2) : '--'}</div>
+        <div class="coin-price">${item.currency || '$'}${item.price ? Number(item.price).toFixed(item.price < 1 ? 4 : 2) : '--'}</div>
         <div class="sparkline-container" id="${containerId}"></div>
     `;
     card.className = `crypto-card ${isUp ? 'up' : 'down'}`;
@@ -682,7 +689,7 @@ async function openDetails(item, type) {
 
     modalTitle.innerHTML = `<div style="display:flex; align-items:center; gap:10px">
         <span style="font-size:1.5rem">${item.name}</span>
-        <span style="font-weight:400; font-size:1.2rem; color:${getPriceColor(item.price, 0)}">${item.currency || '$'}${item.price.toLocaleString()}</span>
+        <span style="font-weight:400; font-size:1.2rem; color:${getPriceColor(item.price, 0)}">${item.currency || '$'}${item.price ? Number(item.price).toLocaleString() : '--'}</span>
     </div>`;
     detailsModal.classList.remove('hidden');
 
