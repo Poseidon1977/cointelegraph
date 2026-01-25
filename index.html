@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoinTelegraph</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2962ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+
+<body>
+    <div class="app-wrapper">
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>Coin<span class="highlight">Telegraph</span></h2>
+            </div>
+            <nav>
+                <ul>
+                    <li class="nav-item active" data-target="dashboard">
+                        <span class="icon">📊</span> Crypto
+                    </li>
+                    <li class="nav-item" data-target="stocks">
+                        <span class="icon">📈</span> Stocks
+                    </li>
+                    <li class="nav-item" data-target="commodities">
+                        <span class="icon">🧈</span> Commodities
+                    </li>
+                    <li class="nav-item" data-target="forex">
+                        <span class="icon">💱</span> Currencies
+                    </li>
+                    <li class="nav-item" data-target="news">
+                        <span class="icon">📰</span> Global News
+                    </li>
+                    <li class="nav-item" data-target="settings">
+                        <span class="icon">⚙️</span> Settings
+                    </li>
+                </ul>
+            </nav>
+            <div class="market-status">
+                <small>Market Status</small>
+                <div class="status-indicator online">Live</div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="header-left">
+                    <h1 id="page-title">Market Overview</h1>
+                </div>
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Search Crypto (e.g. PEPE)...">
+                    <button id="search-btn">🔍</button>
+                </div>
+                <div class="date-display" id="date-display">--</div>
+            </header>
+
+            <div id="content-area">
+                <!-- Dashboard View -->
+                <div id="view-dashboard" class="view-section active">
+                    <div class="grid-container" id="crypto-grid">
+                        <div class="loading">Loading Top 20 Assets...</div>
+                    </div>
+                </div>
+
+                <!-- Stocks View -->
+                <div id="view-stocks" class="view-section hidden">
+                    <div class="grid-container" id="stocks-grid">
+                        <div class="loading">Loading Market Giants...</div>
+                    </div>
+                </div>
+
+                <!-- Commodities View -->
+                <div id="view-commodities" class="view-section hidden">
+                    <div class="grid-container" id="commodities-grid">
+                        <div class="loading">Loading Gold & Silver...</div>
+                    </div>
+                </div>
+
+                <!-- Forex View -->
+                <div id="view-forex" class="view-section hidden">
+                    <!-- Enhanced Converter Card -->
+                    <div class="converter-card" id="converter-widget">
+                        <div class="converter-header">
+                            <h3>Real-Time Currency Converter</h3>
+                            <p>Global rates updated live</p>
+                        </div>
+
+                        <div class="converter-body">
+                            <div class="conv-input-group">
+                                <label>Amount</label>
+                                <input type="number" id="conv-amount" value="100" placeholder="0.00">
+                            </div>
+
+                            <div class="conv-selection-group">
+                                <div class="conv-col">
+                                    <label>From</label>
+                                    <select id="conv-from"></select>
+                                </div>
+
+                                <button id="conv-swap" class="swap-btn" title="Swap Currencies">⇄</button>
+
+                                <div class="conv-col">
+                                    <label>To</label>
+                                    <select id="conv-to"></select>
+                                </div>
+                            </div>
+
+                            <div class="conv-result-section">
+                                <div class="result-label">Converted Amount</div>
+                                <div class="result-value" id="conv-result">0.00</div>
+                                <div id="converter-mini-chart" style="height:60px; margin: 10px 0;"></div>
+                                <div class="result-rate-info" id="conv-rate-info">1 USD = 0.00 TRY</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-container" id="forex-grid">
+                        <div class="loading">Loading Forex Market...</div>
+                    </div>
+                </div>
+
+                <!-- News View -->
+                <div id="view-news" class="view-section hidden">
+                    <div class="news-feed" id="global-news-feed">
+                        <div class="loading">Loading Global Crypto News...</div>
+                    </div>
+                </div>
+
+                <!-- Settings View (Placeholder) -->
+                <div id="view-settings" class="view-section hidden">
+                    <div class="card settings-card">
+                        <h3>Application Settings</h3>
+                        <p>Theme: Dark (Default)</p>
+                        <p>API: Finnhub Free Tier</p>
+                        <p>Version: 2.0.0</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Details Modal (Same as before but styled better) -->
+    <div id="details-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:10px">
+                    <h2 id="modal-title" style="margin:0">Details</h2>
+                    <span id="live-indicator" class="status-indicator"
+                        style="display:none; font-size:0.7rem; padding:2px 6px">LIVE</span>
+                </div>
+                <button id="close-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="chart-section">
+                    <h3>Price Chart (30 Days)</h3>
+                    <div id="price-chart" class="chart-container">Loading Chart...</div>
+                </div>
+                <div class="recommendations-section">
+                    <h3>Analyst Consensus</h3>
+                    <div id="rec-chart" class="rec-bar"></div>
+                    <div id="rec-text">Loading...</div>
+                </div>
+                <div class="stats-section">
+                    <h3>Financial Overview</h3>
+                    <div id="market-stats" class="stats-grid">Loading Stats...</div>
+                </div>
+                <div class="exchanges-section">
+                    <h3>Top Exchanges</h3>
+                    <div id="exchanges-list" class="exchange-grid">Loading Market Data...</div>
+                </div>
+                <div class="news-section">
+                    <h3>Latest Asset News</h3>
+                    <ul id="asset-news-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script src="app.js"></script>
+</body>
+
+</html>

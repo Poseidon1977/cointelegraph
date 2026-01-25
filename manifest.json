@@ -1,0 +1,17 @@
+{
+  "name": "CoinTelegraph Market Tracker",
+  "short_name": "CoinTelegraph",
+  "description": "Real-time crypto, stock, and forex tracker with 24h trends.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#2962ff",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2585/2585206.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
