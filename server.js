@@ -8,6 +8,17 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Strict Cache Control for Service Worker (Ensures updates are detected)
+app.use((req, res, next) => {
+    if (req.url === '/sw.js') {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Expires', '0');
+        res.setHeader('Surrogate-Control', 'no-store');
+    }
+    next();
+});
+
 app.use(express.static('./')); // Serve frontend files
 
 const FINNHUB_KEY = process.env.FINNHUB_API_KEY;
