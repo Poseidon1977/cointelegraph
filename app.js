@@ -415,28 +415,44 @@ async function fetchPrices() {
 }
 
 async function fetchStocks() {
-    const symbols = [...config.stockSymbols];
-    for (const stock of symbols) {
+    for (const stock of config.stockSymbols) {
         try {
+            // 1. Fetch Quote (Price) - Essential
             const res = await fetch(`/api/quote?symbol=${stock.id}`);
             const data = await res.json();
-
-            const to = Math.floor(Date.now() / 1000);
-            const from = to - (7 * 24 * 3600);
-            const candleRes = await fetch(`/api/candles?symbol=${stock.id}&resolution=60&from=${from}&to=${to}&type=stock`);
-            const candleData = await candleRes.json();
+            if (!data.c) {
+                console.warn(`No quote data for ${stock.id}, skipping.`);
+                continue;
+            }
 
             state.stocks[stock.id] = {
                 ...stock,
                 price: data.c,
                 change: data.d,
                 percentChange: data.dp,
-                sparkline: (candleData.s === 'ok') ? candleData.c.slice(-24) : []
+                sparkline: []
             };
-            await new Promise(r => setTimeout(r, 200)); // 200ms delay between assets
+
+            // render immediately with price
+            renderCard(state.stocks[stock.id], stocksGrid, false);
+
+            // 2. Fetch Candles (Chart) - Optional
+            try {
+                const to = Math.floor(Date.now() / 1000);
+                const from = to - (7 * 24 * 3600);
+                const candleRes = await fetch(`/api/candles?symbol=${stock.id}&resolution=60&from=${from}&to=${to}&type=stock`);
+                const candleData = await candleRes.json();
+                if (candleData.s === 'ok' && candleData.c) {
+                    state.stocks[stock.id].sparkline = candleData.c.slice(-24);
+                    renderCard(state.stocks[stock.id], stocksGrid, false); // Update with chart
+                } else {
+                    console.warn(`No valid candle data for ${stock.id}. Status: ${candleData.s}`);
+                }
+            } catch (e) { console.warn(`Chart failed for ${stock.id}`, e); }
+
+            await new Promise(r => setTimeout(r, 300));
         } catch (e) { console.error(`Stock fetch failed for ${stock.id}`, e); }
     }
-    renderGrid(state.stocks, stocksGrid, false);
 }
 
 async function fetchCommodities() {
@@ -447,24 +463,41 @@ async function fetchCommodities() {
         try {
             const res = await fetch(`/api/quote?symbol=${com.id}`);
             const data = await res.json();
-
-            const to = Math.floor(Date.now() / 1000);
-            const from = to - (7 * 24 * 3600);
-            const candleRes = await fetch(`/api/candles?symbol=${com.id}&resolution=60&from=${from}&to=${to}&type=stock`);
-            const candleData = await candleRes.json();
+            if (!data.c) continue;
 
             state.commodities[com.id] = {
                 ...com,
                 price: data.c,
                 change: data.d,
                 percentChange: data.dp,
-                sparkline: (candleData.s === 'ok') ? candleData.c.slice(-24) : []
+                sparkline: []
             };
-            await new Promise(r => setTimeout(r, 200));
+            renderCard(state.commodities[com.id], commoditiesGrid, false);
+
+            try {
+                const to = Math.floor(Date.now() / 1000);
+                const from = to - (7 * 24 * 3600);
+                const candleRes = await fetch(`/api/candles?symbol=${com.id}&resolution=60&from=${from}&to=${to}&type=stock`);
+                const candleData = await candleRes.json();
+                if (candleData.s === 'ok' && candleData.c) {
+                    state.commodities[com.id].sparkline = candleData.c.slice(-24);
+                    renderCard(state.commodities[com.id], commoditiesGrid, false);
+                }
+            } catch (e) { }
+
+            await new Promise(r => setTimeout(r, 300));
         } catch (e) { }
     }
 
-    // Calculate Virtual Localized Prices
+    // Refresh Virtuals after base data (GLD/SLV) is ready
+    setTimeout(() => {
+        calculateVirtualCommodities();
+    }, 2000);
+}
+
+function calculateVirtualCommodities() {
+    console.log('Calculating virtual commodities...');
+    const virtuals = config.commoditySymbols.filter(c => c.virtual);
     const spotGold = state.commodities['GLD']?.price || 0;
     const spotSilver = state.commodities['SLV']?.price || 0;
     const goldSpark = state.commodities['GLD']?.sparkline || [];
@@ -489,6 +522,7 @@ async function fetchCommodities() {
                 change: goldChange * scaleFactor * purity,
                 percentChange: goldPct
             };
+            renderCard(state.commodities[id], commoditiesGrid, false);
         });
 
         if (uahRate) {
@@ -504,6 +538,7 @@ async function fetchCommodities() {
                     change: goldChange * uahScale * purity,
                     percentChange: goldPct
                 };
+                renderCard(state.commodities[id], commoditiesGrid, false);
             });
         }
     }
@@ -521,6 +556,8 @@ async function fetchCommodities() {
             change: silverChange * silverScale,
             percentChange: silverPct
         };
+        renderCard(state.commodities['TR_SILVER'], commoditiesGrid, false);
+
         if (uahRate) {
             const uaSilverScale = uahRate / 31.1035;
             state.commodities['UA_SILVER'] = {
@@ -531,40 +568,45 @@ async function fetchCommodities() {
                 change: silverChange * uaSilverScale,
                 percentChange: silverPct
             };
+            renderCard(state.commodities['UA_SILVER'], commoditiesGrid, false);
         }
     }
-
-    renderGrid(state.commodities, commoditiesGrid, false);
 }
 
 async function fetchForex() {
-    const queue = [...config.forexSymbols];
-    for (const fx of queue) {
+    for (const fx of config.forexSymbols) {
         try {
             const res = await fetch(`/api/quote?symbol=${fx.id}`);
             const data = await res.json();
-
-            const to = Math.floor(Date.now() / 1000);
-            const from = to - (7 * 24 * 3600);
-            const candleRes = await fetch(`/api/candles?symbol=${fx.id}&resolution=60&from=${from}&to=${to}&type=forex`);
-            const candleData = await candleRes.json();
 
             state.forex[fx.id] = {
                 ...fx,
                 price: data.c,
                 change: data.d,
                 percentChange: data.dp,
-                sparkline: (candleData.s === 'ok') ? candleData.c.slice(-24) : []
+                sparkline: []
             };
-            await new Promise(r => setTimeout(r, 200));
+            renderCard(state.forex[fx.id], forexGrid, false);
+
+            try {
+                const to = Math.floor(Date.now() / 1000);
+                const from = to - (7 * 24 * 3600);
+                const candleRes = await fetch(`/api/candles?symbol=${fx.id}&resolution=60&from=${from}&to=${to}&type=forex`);
+                const candleData = await candleRes.json();
+                if (candleData.s === 'ok' && candleData.c) {
+                    state.forex[fx.id].sparkline = candleData.c.slice(-24);
+                    renderCard(state.forex[fx.id], forexGrid, false);
+                }
+            } catch (e) { }
+
+            await new Promise(r => setTimeout(r, 300));
         } catch (e) { }
     }
-    renderGrid(state.forex, forexGrid, false);
 }
 
 function renderGrid(collection, container, isCrypto) {
     if (Object.keys(collection).length > 0 && container.querySelector('.loading')) container.innerHTML = '';
-    Object.values(collection).forEach(item => renderCard(item, container, isCrypto));
+    // Cards are now rendered incrementally within the fetch functions
 }
 
 function renderCard(item, container, isCrypto) {
@@ -634,7 +676,7 @@ function renderSparkline(containerId, data, color) {
 }
 
 async function fetchGlobalNews(cacheOnly = false) {
-    if (!cacheOnly) globalNewsFeed.innerHTML = '<div class="loading">Fetching news...</div>';
+    if (!cacheOnly) globalNewsFeed.innerHTML = '<div class="loading">Küresel haberler yükleniyor...</div>';
     try {
         const [cryptoRes, generalRes] = await Promise.all([
             fetch(`/api/news?category=crypto`),
@@ -642,10 +684,22 @@ async function fetchGlobalNews(cacheOnly = false) {
         ]);
         const crypto = await cryptoRes.json();
         const general = await generalRes.json();
-        const merged = [...crypto, ...general].sort((a, b) => b.datetime - a.datetime);
+
+        const merged = [...(Array.isArray(crypto) ? crypto : []), ...(Array.isArray(general) ? general : [])]
+            .sort((a, b) => b.datetime - a.datetime);
+
         state.generalNewsCache = merged;
-        if (!cacheOnly) renderNewsList(merged);
-    } catch (e) { }
+        if (!cacheOnly) {
+            if (merged.length === 0) {
+                globalNewsFeed.innerHTML = '<div style="text-align:center; padding:20px; color:#666">Şu an için haber bulunamadı.</div>';
+            } else {
+                renderNewsList(merged);
+            }
+        }
+    } catch (e) {
+        console.error('News fetch failed:', e);
+        if (!cacheOnly) globalNewsFeed.innerHTML = '<div style="text-align:center; padding:20px; color:#ff3d00">Haberler yüklenirken bir hata oluştu.</div>';
+    }
 }
 
 function renderNewsList(articles) {
