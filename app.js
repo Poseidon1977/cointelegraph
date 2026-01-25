@@ -447,28 +447,83 @@ async function fetchCommodities() {
     // Calculate Virtual Localized Prices
     const spotGold = state.commodities['GLD']?.price || 0;
     const spotSilver = state.commodities['SLV']?.price || 0;
+    const goldSpark = state.commodities['GLD']?.sparkline || [];
+    const silverSpark = state.commodities['SLV']?.sparkline || [];
     const tryRate = state.exchangeRates?.TRY || 0;
     const uahRate = state.exchangeRates?.UAH || 0;
 
-    if (spotGold && tryRate) {
+    if (spotGold && tryRate && goldSpark.length > 0) {
         const gramGoldUSD = spotGold / 31.1035;
         const prices = { '24K': 1, '22K': 0.916, '18K': 0.750, '14K': 0.585 };
+        const scaleFactor = tryRate / 31.1035;
 
-        state.commodities['TR_GOLD_24K'] = { ...virtuals.find(v => v.id === 'TR_GOLD_24K'), price: gramGoldUSD * tryRate * prices['24K'], currency: '₺' };
-        state.commodities['TR_GOLD_22K'] = { ...virtuals.find(v => v.id === 'TR_GOLD_22K'), price: gramGoldUSD * tryRate * prices['22K'], currency: '₺' };
-        state.commodities['TR_GOLD_14K'] = { ...virtuals.find(v => v.id === 'TR_GOLD_14K'), price: gramGoldUSD * tryRate * prices['14K'], currency: '₺' };
+        state.commodities['TR_GOLD_24K'] = {
+            ...virtuals.find(v => v.id === 'TR_GOLD_24K'),
+            price: gramGoldUSD * tryRate * prices['24K'],
+            currency: '₺',
+            sparkline: goldSpark.map(v => v * scaleFactor * prices['24K']),
+            change: state.commodities['GLD'].change * scaleFactor * prices['24K'],
+            percentChange: state.commodities['GLD'].percentChange
+        };
+        state.commodities['TR_GOLD_22K'] = {
+            ...virtuals.find(v => v.id === 'TR_GOLD_22K'),
+            price: gramGoldUSD * tryRate * prices['22K'],
+            currency: '₺',
+            sparkline: goldSpark.map(v => v * scaleFactor * prices['22K']),
+            change: state.commodities['GLD'].change * scaleFactor * prices['22K'],
+            percentChange: state.commodities['GLD'].percentChange
+        };
+        state.commodities['TR_GOLD_14K'] = {
+            ...virtuals.find(v => v.id === 'TR_GOLD_14K'),
+            price: gramGoldUSD * tryRate * prices['14K'],
+            currency: '₺',
+            sparkline: goldSpark.map(v => v * scaleFactor * prices['14K']),
+            change: state.commodities['GLD'].change * scaleFactor * prices['14K'],
+            percentChange: state.commodities['GLD'].percentChange
+        };
 
         if (uahRate) {
-            state.commodities['UA_GOLD_24K'] = { ...virtuals.find(v => v.id === 'UA_GOLD_24K'), price: gramGoldUSD * uahRate * prices['24K'], currency: '₴' };
-            state.commodities['UA_GOLD_18K'] = { ...virtuals.find(v => v.id === 'UA_GOLD_18K'), price: gramGoldUSD * uahRate * prices['18K'], currency: '₴' };
+            const uahScale = uahRate / 31.1035;
+            state.commodities['UA_GOLD_24K'] = {
+                ...virtuals.find(v => v.id === 'UA_GOLD_24K'),
+                price: gramGoldUSD * uahRate * prices['24K'],
+                currency: '₴',
+                sparkline: goldSpark.map(v => v * uahScale * prices['24K']),
+                change: state.commodities['GLD'].change * uahScale * prices['24K'],
+                percentChange: state.commodities['GLD'].percentChange
+            };
+            state.commodities['UA_GOLD_18K'] = {
+                ...virtuals.find(v => v.id === 'UA_GOLD_18K'),
+                price: gramGoldUSD * uahRate * prices['18K'],
+                currency: '₴',
+                sparkline: goldSpark.map(v => v * uahScale * prices['18K']),
+                change: state.commodities['GLD'].change * uahScale * prices['18K'],
+                percentChange: state.commodities['GLD'].percentChange
+            };
         }
     }
 
-    if (spotSilver && tryRate) {
-        const gramSilverUSD = spotSilver / 31.1035;
-        state.commodities['TR_SILVER'] = { ...virtuals.find(v => v.id === 'TR_SILVER'), price: gramSilverUSD * tryRate, currency: '₺' };
-        if (uahRate)
-            state.commodities['UA_SILVER'] = { ...virtuals.find(v => v.id === 'UA_SILVER'), price: gramSilverUSD * uahRate, currency: '₴' };
+    if (spotSilver && tryRate && silverSpark.length > 0) {
+        const silverScale = tryRate / 31.1035;
+        state.commodities['TR_SILVER'] = {
+            ...virtuals.find(v => v.id === 'TR_SILVER'),
+            price: (spotSilver / 31.1035) * tryRate,
+            currency: '₺',
+            sparkline: silverSpark.map(v => v * silverScale),
+            change: state.commodities['SLV'].change * silverScale,
+            percentChange: state.commodities['SLV'].percentChange
+        };
+        if (uahRate) {
+            const uaSilverScale = uahRate / 31.1035;
+            state.commodities['UA_SILVER'] = {
+                ...virtuals.find(v => v.id === 'UA_SILVER'),
+                price: (spotSilver / 31.1035) * uahRate,
+                currency: '₴',
+                sparkline: silverSpark.map(v => v * uaSilverScale),
+                change: state.commodities['SLV'].change * uaSilverScale,
+                percentChange: state.commodities['SLV'].percentChange
+            };
+        }
     }
 
     renderGrid(state.commodities, commoditiesGrid, false);
