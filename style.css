@@ -24,7 +24,11 @@ body {
     font-family: var(--font-family);
     height: 100vh;
     overflow: hidden;
-    /* App-like feel */
+    /* Native App Feel */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 /* Layout */
@@ -76,6 +80,11 @@ body {
 .nav-item.active {
     background-color: var(--primary);
     color: #fff;
+    box-shadow: 0 4px 15px rgba(41, 98, 255, 0.4);
+}
+
+.nav-item:active {
+    transform: scale(0.95);
 }
 
 .icon {

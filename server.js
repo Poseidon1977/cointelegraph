@@ -12,6 +12,11 @@ app.use(express.static('./')); // Serve frontend files
 
 const FINNHUB_KEY = process.env.FINNHUB_API_KEY;
 
+if (!FINNHUB_KEY) {
+    console.error('CRITICAL ERROR: FINNHUB_API_KEY is not defined in environment variables.');
+    console.error('Please add it to your Railway dashboard under "Variables".');
+}
+
 // API Routes
 app.get('/api/quote', async (req, res) => {
     try {
