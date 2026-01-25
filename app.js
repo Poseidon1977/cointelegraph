@@ -673,12 +673,70 @@ function showToast(title, body, type) {
     setTimeout(() => { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); }, 5000);
 }
 
-// MODAL & CHARTS (Simplified for brevity as they work)
+// --- MODAL & CHARTS ---
 async function openDetails(item, type) {
     state.activeSymbol = item.id;
-    modalTitle.innerHTML = `<div style="display:flex; align-items:center; gap:10px"><span>${item.name}</span><span>$${item.price}</span></div>`;
+    const isVirtual = item.virtual;
+    const baseId = item.id.startsWith('TR_GOLD') || item.id.startsWith('UA_GOLD') ? 'GLD' :
+        (item.id.startsWith('TR_SILVER') || item.id.startsWith('UA_SILVER') ? 'SLV' : item.id);
+
+    modalTitle.innerHTML = `<div style="display:flex; align-items:center; gap:10px">
+        <span style="font-size:1.5rem">${item.name}</span>
+        <span style="font-weight:400; font-size:1.2rem; color:${getPriceColor(item.price, 0)}">${item.currency || '$'}${item.price.toLocaleString()}</span>
+    </div>`;
     detailsModal.classList.remove('hidden');
-    // WebSocket subscription removed in backend-mode
+
+    // 1. Fetch & Render 30-day Chart
+    const to = Math.floor(Date.now() / 1000);
+    const from = to - (30 * 24 * 3600);
+    const apiType = (type === 'crypto' || type === 'forex') ? type : 'stock';
+
+    try {
+        const res = await fetch(`/api/candles?symbol=${baseId}&resolution=D&from=${from}&to=${to}&type=${apiType}`);
+        const data = await res.json();
+        if (data.s === 'ok') {
+            let prices = data.c;
+            if (isVirtual) {
+                const rate = item.id.includes('TR') ? (state.exchangeRates?.TRY || 1) : (state.exchangeRates?.UAH || 1);
+                const purity = item.id.includes('24K') ? 1 : (item.id.includes('22K') ? 0.916 : (item.id.includes('18K') ? 0.75 : (item.id.includes('14K') ? 0.585 : 1)));
+                const scale = rate / 31.1035;
+                prices = prices.map(p => p * scale * purity);
+            }
+            renderChart(prices, data.t.map(t => new Date(t * 1000).toLocaleDateString()));
+        }
+    } catch (e) { console.error('Modal Chart failed', e); }
+
+    // 2. Fetch & Render News
+    try {
+        const newsRes = await fetch(`/api/news?category=${type === 'crypto' ? 'crypto' : 'general'}`);
+        const news = await newsRes.json();
+        assetNewsList.innerHTML = '';
+        news.slice(0, 5).forEach(n => {
+            const li = document.createElement('li');
+            li.style.marginBottom = '15px';
+            li.innerHTML = `<a href="${n.url}" target="_blank" style="color:#00e5ff; text-decoration:none; font-weight:600">${n.headline}</a>
+                            <p style="font-size:0.8rem; color:#888; margin-top:3px">${n.source} • ${new Date(n.datetime * 1000).toLocaleDateString()}</p>`;
+            assetNewsList.appendChild(li);
+        });
+    } catch (e) { }
+}
+
+function renderChart(data, labels) {
+    const options = {
+        series: [{ name: 'Price', data: data }],
+        chart: { type: 'area', height: 350, toolbar: { show: false }, background: 'transparent' },
+        colors: ['#2962ff'],
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0 } },
+        stroke: { curve: 'smooth', width: 3 },
+        xaxis: { categories: labels, labels: { style: { colors: '#666' } } },
+        yaxis: { labels: { style: { colors: '#666' }, formatter: (v) => v.toFixed(2) } },
+        grid: { borderColor: '#222' },
+        theme: { mode: 'dark' },
+        tooltip: { theme: 'dark' }
+    };
+    if (state.chartInstance) state.chartInstance.destroy();
+    state.chartInstance = new ApexCharts(document.getElementById('price-chart'), options);
+    state.chartInstance.render();
 }
 
 init();
