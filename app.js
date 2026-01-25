@@ -113,32 +113,30 @@ function init() {
     setupConverter();
     updateDateTime();
     initWebSocket();
-    Promise.all([
-        fetchExchangeRates(),
-        fetchPrices(),
-        fetchStocks(),
-        fetchCommodities(),
-        fetchForex(),
-        fetchGlobalNews()
-    ]).catch(err => console.error('Initial fetch failed:', err));
+
+    // Stable Fetch Sequence
+    fetchExchangeRates().then(() => {
+        fetchPrices();
+        fetchStocks();
+        fetchCommodities();
+        fetchForex();
+    });
+    fetchGlobalNews();
 
     setInterval(fetchPrices, 20000);
     setInterval(fetchStocks, 60000);
     setInterval(fetchCommodities, 60000);
     setInterval(fetchForex, 60000);
-    setInterval(fetchExchangeRates, 3600000); // 1 hour for converter rates
+    setInterval(fetchExchangeRates, 3600000);
     setInterval(updateDateTime, 1000);
     setInterval(() => { fetchGlobalNews(state.currentView !== 'news'); }, 900000);
 
-    // Register PWA Service Worker
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
                 .then(reg => console.log('SW Registered', reg))
                 .catch(err => console.log('SW Registration failed', err));
         });
-
-        // Auto-reload when new Service Worker takes over
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (!refreshing) {
@@ -455,55 +453,38 @@ async function fetchCommodities() {
     const uahRate = state.exchangeRates?.UAH || 0;
 
     if (spotGold && tryRate) {
-        const gramGoldUSD = spotGold / 31.1035;
         const prices = { '24K': 1, '22K': 0.916, '18K': 0.750, '14K': 0.585 };
         const scaleFactor = tryRate / 31.1035;
         const goldChange = state.commodities['GLD']?.change || 0;
         const goldPct = state.commodities['GLD']?.percentChange || 0;
 
-        state.commodities['TR_GOLD_24K'] = {
-            ...virtuals.find(v => v.id === 'TR_GOLD_24K'),
-            price: gramGoldUSD * tryRate * prices['24K'],
-            currency: '₺',
-            sparkline: goldSpark.map(v => v * scaleFactor * prices['24K']),
-            change: goldChange * scaleFactor * prices['24K'],
-            percentChange: goldPct
-        };
-        state.commodities['TR_GOLD_22K'] = {
-            ...virtuals.find(v => v.id === 'TR_GOLD_22K'),
-            price: gramGoldUSD * tryRate * prices['22K'],
-            currency: '₺',
-            sparkline: goldSpark.map(v => v * scaleFactor * prices['22K']),
-            change: goldChange * scaleFactor * prices['22K'],
-            percentChange: goldPct
-        };
-        state.commodities['TR_GOLD_14K'] = {
-            ...virtuals.find(v => v.id === 'TR_GOLD_14K'),
-            price: gramGoldUSD * tryRate * prices['14K'],
-            currency: '₺',
-            sparkline: goldSpark.map(v => v * scaleFactor * prices['14K']),
-            change: goldChange * scaleFactor * prices['14K'],
-            percentChange: goldPct
-        };
+        ['24K', '22K', '14K'].forEach(k => {
+            const id = `TR_GOLD_${k}`;
+            const purity = prices[k];
+            state.commodities[id] = {
+                ...virtuals.find(v => v.id === id),
+                price: (spotGold / 31.1035) * tryRate * purity,
+                currency: '₺',
+                sparkline: goldSpark.length ? goldSpark.map(v => v * scaleFactor * purity) : [],
+                change: goldChange * scaleFactor * purity,
+                percentChange: goldPct
+            };
+        });
 
         if (uahRate) {
             const uahScale = uahRate / 31.1035;
-            state.commodities['UA_GOLD_24K'] = {
-                ...virtuals.find(v => v.id === 'UA_GOLD_24K'),
-                price: gramGoldUSD * uahRate * prices['24K'],
-                currency: '₴',
-                sparkline: goldSpark.map(v => v * uahScale * prices['24K']),
-                change: goldChange * uahScale * prices['24K'],
-                percentChange: goldPct
-            };
-            state.commodities['UA_GOLD_18K'] = {
-                ...virtuals.find(v => v.id === 'UA_GOLD_18K'),
-                price: gramGoldUSD * uahRate * prices['18K'],
-                currency: '₴',
-                sparkline: goldSpark.map(v => v * uahScale * prices['18K']),
-                change: goldChange * uahScale * prices['18K'],
-                percentChange: goldPct
-            };
+            ['24K', '18K'].forEach(k => {
+                const id = `UA_GOLD_${k}`;
+                const purity = prices[k];
+                state.commodities[id] = {
+                    ...virtuals.find(v => v.id === id),
+                    price: (spotGold / 31.1035) * uahRate * purity,
+                    currency: '₴',
+                    sparkline: goldSpark.length ? goldSpark.map(v => v * uahScale * purity) : [],
+                    change: goldChange * uahScale * purity,
+                    percentChange: goldPct
+                };
+            });
         }
     }
 
@@ -516,7 +497,7 @@ async function fetchCommodities() {
             ...virtuals.find(v => v.id === 'TR_SILVER'),
             price: (spotSilver / 31.1035) * tryRate,
             currency: '₺',
-            sparkline: silverSpark.map(v => v * silverScale),
+            sparkline: silverSpark.length ? silverSpark.map(v => v * silverScale) : [],
             change: silverChange * silverScale,
             percentChange: silverPct
         };
@@ -526,7 +507,7 @@ async function fetchCommodities() {
                 ...virtuals.find(v => v.id === 'UA_SILVER'),
                 price: (spotSilver / 31.1035) * uahRate,
                 currency: '₴',
-                sparkline: silverSpark.map(v => v * uaSilverScale),
+                sparkline: silverSpark.length ? silverSpark.map(v => v * uaSilverScale) : [],
                 change: silverChange * uaSilverScale,
                 percentChange: silverPct
             };
@@ -605,7 +586,10 @@ function renderCard(item, container, isCrypto) {
     card.className = `crypto-card ${isUp ? 'up' : 'down'}`;
 
     if (item.sparkline && item.sparkline.length > 0) {
-        renderSparkline(containerId, item.sparkline, isUp ? '#00c853' : '#ff3d00');
+        // Explicitly wait for DOM to be ready for ApexCharts
+        setTimeout(() => {
+            renderSparkline(containerId, item.sparkline, isUp ? '#00c853' : '#ff3d00');
+        }, 100);
     }
 }
 
@@ -652,9 +636,9 @@ function renderNewsList(articles) {
         card.innerHTML = `
             <img src="${news.image || 'https://via.placeholder.com/200x150?text=News'}" class="news-image" onerror="this.src='https://via.placeholder.com/200x150?text=News'">
             <div class="news-content">
-                <div><a href="${news.url}" target="_blank" class="news-title">${news.headline}</a>
-                <p style="color:#aaa; font-size:0.9rem; margin-top:5px">${news.summary.substring(0, 120)}...</p></div>
-                <div class="news-source">${news.source} • ${new Date(news.datetime * 1000).toLocaleTimeString()}</div>
+                <div><a href="${n.url}" target="_blank" class="news-title">${n.headline}</a>
+                <p style="color:#aaa; font-size:0.9rem; margin-top:5px">${n.summary.substring(0, 120)}...</p></div>
+                <div class="news-source">${n.source} • ${new Date(n.datetime * 1000).toLocaleTimeString()}</div>
             </div>`;
         globalNewsFeed.appendChild(card);
     });
@@ -666,7 +650,7 @@ function checkAlerts(item) {
     if (Math.abs(pct) >= 5) {
         const alertId = `${item.id}_${pct > 0 ? 'UP' : 'DOWN'}`;
         if (!state.alertHistory.has(alertId)) {
-            showToast(`${item.display} Moving!`, `${item.name} is ${pct > 0 ? 'up' : 'down'} ${Math.abs(pct).toFixed(2)}%`, pct > 0 ? 'up' : 'down');
+            showToast(`${item.display} Moving!`, `${item.name} is ${pct > 0 ? 'up' : 'down'} ${Math.abs(pct).toFixed(2)}%`, pct > 0 ? 'down' : 'up');
             state.alertHistory.add(alertId);
         }
     }
@@ -698,10 +682,12 @@ async function openDetails(item, type) {
     const from = to - (30 * 24 * 3600);
     const apiType = (type === 'crypto' || type === 'forex') ? type : 'stock';
 
+    priceChartDiv.innerHTML = '<div class="loading">Loading Historical Data...</div>';
+
     try {
         const res = await fetch(`/api/candles?symbol=${baseId}&resolution=D&from=${from}&to=${to}&type=${apiType}`);
         const data = await res.json();
-        if (data.s === 'ok') {
+        if (data.s === 'ok' && data.c && data.c.length > 0) {
             let prices = data.c;
             if (isVirtual) {
                 const rate = item.id.includes('TR') ? (state.exchangeRates?.TRY || 1) : (state.exchangeRates?.UAH || 1);
@@ -710,8 +696,13 @@ async function openDetails(item, type) {
                 prices = prices.map(p => p * scale * purity);
             }
             renderChart(prices, data.t.map(t => new Date(t * 1000).toLocaleDateString()));
+        } else {
+            priceChartDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#666">Historical data temporarily unavailable for this asset.</div>';
         }
-    } catch (e) { console.error('Modal Chart failed', e); }
+    } catch (e) {
+        console.error('Modal Chart failed', e);
+        priceChartDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#ff3d00">Error loading chart data.</div>';
+    }
 
     // 2. Fetch & Render News
     try {
