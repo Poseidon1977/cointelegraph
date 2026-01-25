@@ -19,7 +19,8 @@ app.get('/api/quote', async (req, res) => {
         const response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
         res.json(response.data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('API Error (/api/quote):', error.message);
+        res.status(500).json({ error: error.message, detail: 'Check FINNHUB_API_KEY' });
     }
 });
 
@@ -59,6 +60,7 @@ app.get('/api/forex/latest', async (req, res) => {
         const response = await axios.get('https://open.er-api.com/v6/latest/USD');
         res.json(response.data);
     } catch (error) {
+        console.error('API Error (/api/forex/latest):', error.message);
         res.status(500).json({ error: error.message });
     }
 });

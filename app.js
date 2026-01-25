@@ -250,13 +250,9 @@ function calculateConversion() {
 
 // --- CORE SYSTEM ---
 function initWebSocket() {
-    state.socket = new WebSocket(`wss://ws.finnhub.io?token=${config.apiKey}`);
-    state.socket.onopen = () => { console.log('WebSocket Connected'); };
-    state.socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'trade') handleTrade(data.data);
-    };
-    state.socket.onclose = () => { setTimeout(initWebSocket, 5000); };
+    // Note: Live WebSocket usually requires a client-side key. 
+    // If config.apiKey is removed, we gracefully disable live updates for now.
+    console.log('WebSocket: Live updates disabled in backend-mode (requires secure proxying)');
 }
 
 function handleTrade(trades) {
@@ -373,8 +369,7 @@ async function fetchPrices() {
         });
         renderGrid(state.coins, cryptoGrid, true);
     } catch (e) {
-        console.error('CoinGecko fetch failed, falling back to Finnhub', e);
-        // Fallback to legacy Finnhub (no sparklines)
+        // Fallback to legacy (Requires proxy support)
         const queue = [...config.symbols];
         await Promise.all(queue.map(async (coin) => {
             try {
@@ -587,7 +582,7 @@ async function openDetails(item, type) {
     state.activeSymbol = item.id;
     modalTitle.innerHTML = `<div style="display:flex; align-items:center; gap:10px"><span>${item.name}</span><span>$${item.price}</span></div>`;
     detailsModal.classList.remove('hidden');
-    if (state.socket.readyState === WebSocket.OPEN) state.socket.send(JSON.stringify({ 'type': 'subscribe', 'symbol': item.id }));
+    // WebSocket subscription removed in backend-mode
 }
 
 init();
