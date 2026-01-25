@@ -35,11 +35,15 @@ const config = {
         { id: 'ORCL', name: 'Oracle', display: 'ORCL' }
     ],
     commoditySymbols: [
-        { id: 'GLD', name: 'Gold (SPDR)', display: 'XAU' },
-        { id: 'SLV', name: 'Silver (iShares)', display: 'XAG' },
-        { id: 'USO', name: 'Oil Fund', display: 'WTI' },
-        { id: 'UNG', name: 'Natural Gas', display: 'NAT' },
-        { id: 'PPLT', name: 'Platinum', display: 'PLT' }
+        { id: 'GLD', name: 'Gold Index', display: 'XAU' },
+        { id: 'SLV', name: 'Silver Index', display: 'XAG' },
+        { id: 'TR_GOLD_24K', name: '24 Ayar Gram Altın', display: 'Gram (TR)', virtual: true, flag: 'TR' },
+        { id: 'TR_GOLD_22K', name: '22 Ayar Gram Altın', display: 'Gram (TR)', virtual: true, flag: 'TR' },
+        { id: 'TR_GOLD_14K', name: '14 Ayar Gram Altın', display: 'Gram (TR)', virtual: true, flag: 'TR' },
+        { id: 'UA_GOLD_24K', name: '24K Gram Gold (UA)', display: 'Gram (UA)', virtual: true, flag: 'UA' },
+        { id: 'UA_GOLD_18K', name: '18K Gram Gold (UA)', display: 'Gram (UA)', virtual: true, flag: 'UA' },
+        { id: 'TR_SILVER', name: 'Has Gümüş (TR)', display: 'Gümüş', virtual: true, flag: 'TR' },
+        { id: 'UA_SILVER', name: 'Pure Silver (UA)', display: 'Silver', virtual: true, flag: 'UA' }
     ],
     forexSymbols: [
         { id: 'OANDA:USD_TRY', name: 'USD/TRY', display: 'USD/TRY', flag: 'TR' },
@@ -417,16 +421,16 @@ async function fetchStocks() {
 }
 
 async function fetchCommodities() {
-    const queue = [...config.commoditySymbols];
+    const queue = config.commoditySymbols.filter(c => !c.virtual);
+    const virtuals = config.commoditySymbols.filter(c => c.virtual);
+
     await Promise.all(queue.map(async (com) => {
         try {
             const res = await fetch(`/api/quote?symbol=${com.id}`);
             const data = await res.json();
 
-            // Commodities in Finnhub are often treated like stocks/ETFs (GLD, SLV, USO)
-            // resolution '60' means hourly candles, wider range for weekends
             const to = Math.floor(Date.now() / 1000);
-            const from = to - (7 * 24 * 3600); // 7 days back
+            const from = to - (7 * 24 * 3600);
             const candleRes = await fetch(`/api/candles?symbol=${com.id}&resolution=60&from=${from}&to=${to}&type=stock`);
             const candleData = await candleRes.json();
 
@@ -439,6 +443,34 @@ async function fetchCommodities() {
             };
         } catch (e) { }
     }));
+
+    // Calculate Virtual Localized Prices
+    const spotGold = state.commodities['GLD']?.price || 0;
+    const spotSilver = state.commodities['SLV']?.price || 0;
+    const tryRate = state.exchangeRates?.TRY || 0;
+    const uahRate = state.exchangeRates?.UAH || 0;
+
+    if (spotGold && tryRate) {
+        const gramGoldUSD = spotGold / 31.1035;
+        const prices = { '24K': 1, '22K': 0.916, '18K': 0.750, '14K': 0.585 };
+
+        state.commodities['TR_GOLD_24K'] = { ...virtuals.find(v => v.id === 'TR_GOLD_24K'), price: gramGoldUSD * tryRate * prices['24K'], currency: '₺' };
+        state.commodities['TR_GOLD_22K'] = { ...virtuals.find(v => v.id === 'TR_GOLD_22K'), price: gramGoldUSD * tryRate * prices['22K'], currency: '₺' };
+        state.commodities['TR_GOLD_14K'] = { ...virtuals.find(v => v.id === 'TR_GOLD_14K'), price: gramGoldUSD * tryRate * prices['14K'], currency: '₺' };
+
+        if (uahRate) {
+            state.commodities['UA_GOLD_24K'] = { ...virtuals.find(v => v.id === 'UA_GOLD_24K'), price: gramGoldUSD * uahRate * prices['24K'], currency: '₴' };
+            state.commodities['UA_GOLD_18K'] = { ...virtuals.find(v => v.id === 'UA_GOLD_18K'), price: gramGoldUSD * uahRate * prices['18K'], currency: '₴' };
+        }
+    }
+
+    if (spotSilver && tryRate) {
+        const gramSilverUSD = spotSilver / 31.1035;
+        state.commodities['TR_SILVER'] = { ...virtuals.find(v => v.id === 'TR_SILVER'), price: gramSilverUSD * tryRate, currency: '₺' };
+        if (uahRate)
+            state.commodities['UA_SILVER'] = { ...virtuals.find(v => v.id === 'UA_SILVER'), price: gramSilverUSD * uahRate, currency: '₴' };
+    }
+
     renderGrid(state.commodities, commoditiesGrid, false);
 }
 
@@ -501,11 +533,11 @@ function renderCard(item, container, isCrypto) {
                     <span style="color:#666; font-size:0.7rem">${item.display}</span>
                 </div>
             </div>
-            <div class="change-badge ${isUp ? 'change-up' : 'change-down'}">
-                ${isUp ? '+' : ''}${item.percentChange ? item.percentChange.toFixed(1) : '0'}%
+            <div class="change-badge ${(isUp || !item.change) ? 'change-up' : 'change-down'}">
+                ${(isUp || !item.change) ? '+' : ''}${item.percentChange ? item.percentChange.toFixed(1) : '0'}%
             </div>
         </div>
-        <div class="coin-price">$${item.price ? item.price.toFixed(item.price < 1 ? 4 : 2) : '--'}</div>
+        <div class="coin-price">${item.currency || '$'}${item.price ? item.price.toFixed(item.price < 1 ? 4 : 2) : '--'}</div>
         <div class="sparkline-container" id="${containerId}"></div>
     `;
     card.className = `crypto-card ${isUp ? 'up' : 'down'}`;
