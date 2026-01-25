@@ -1,10 +1,11 @@
-const CACHE_NAME = 'coin-telegraph-v2'; // Updated version
+const CACHE_NAME = 'coin-telegraph-v3'; // Force update for icons
 const ASSETS = [
     './',
     './index.html',
-    './style.css',
-    './app.js',
-    './manifest.json',
+    './style.css?v=2.1',
+    './app.js?v=2.1',
+    './manifest.json?v=2',
+    './icon.png?v=2',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
     'https://cdn.jsdelivr.net/npm/apexcharts'
 ];
