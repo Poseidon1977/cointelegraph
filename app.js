@@ -1,814 +1,297 @@
 const config = {
-    // apiKey removed for security, now handled by backend
-    symbols: [
-        { id: 'BINANCE:BTCUSDT', name: 'Bitcoin', display: 'BTC', cg_id: 'bitcoin' },
-        { id: 'BINANCE:ETHUSDT', name: 'Ethereum', display: 'ETH', cg_id: 'ethereum' },
-        { id: 'BINANCE:BNBUSDT', name: 'Binance Coin', display: 'BNB', cg_id: 'binancecoin' },
-        { id: 'BINANCE:SOLUSDT', name: 'Solana', display: 'SOL', cg_id: 'solana' },
-        { id: 'BINANCE:XRPUSDT', name: 'XRP', display: 'XRP', cg_id: 'ripple' },
-        { id: 'BINANCE:ADAUSDT', name: 'Cardano', display: 'ADA', cg_id: 'cardano' },
-        { id: 'BINANCE:DOGEUSDT', name: 'Dogecoin', display: 'DOGE', cg_id: 'dogecoin' },
-        { id: 'BINANCE:AVAXUSDT', name: 'Avalanche', display: 'AVAX', cg_id: 'avalanche-2' },
-        { id: 'BINANCE:TRXUSDT', name: 'Tron', display: 'TRX', cg_id: 'tron' },
-        { id: 'BINANCE:DOTUSDT', name: 'Polkadot', display: 'DOT', cg_id: 'polkadot' },
-        { id: 'BINANCE:LINKUSDT', name: 'Chainlink', display: 'LINK', cg_id: 'chainlink' },
-        { id: 'BINANCE:PEPEUSDT', name: 'Pepe', display: 'PEPE', cg_id: 'pepe' },
-        { id: 'BINANCE:BONKUSDT', name: 'Bonk', display: 'BONK', cg_id: 'bonk' },
-        { id: 'BINANCE:SHIBUSDT', name: 'Shiba Inu', display: 'SHIB', cg_id: 'shiba-inu' },
-        { id: 'BINANCE:LTCUSDT', name: 'Litecoin', display: 'LTC', cg_id: 'litecoin' },
-        { id: 'BINANCE:NEARUSDT', name: 'NEAR Protocol', display: 'NEAR', cg_id: 'near' },
-        { id: 'BINANCE:SUIUSDT', name: 'Sui', display: 'SUI', cg_id: 'sui' },
-        { id: 'BINANCE:APTUSDT', name: 'Aptos', display: 'APT', cg_id: 'aptos' },
-        { id: 'BINANCE:FETUSDT', name: 'Fetch.ai', display: 'FET', cg_id: 'fetch-ai' },
-        { id: 'BINANCE:RENDERUSDT', name: 'Render', display: 'RENDER', cg_id: 'render-token' }
+    crypto: [
+        { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC' },
+        { id: 'ethereum', name: 'Ethereum', symbol: 'ETH' },
+        { id: 'solana', name: 'Solana', symbol: 'SOL' },
+        { id: 'binancecoin', name: 'BNB', symbol: 'BNB' },
+        { id: 'ripple', name: 'XRP', symbol: 'XRP' },
+        { id: 'cardano', name: 'Cardano', symbol: 'ADA' },
+        { id: 'dogecoin', name: 'Dogecoin', symbol: 'DOGE' },
+        { id: 'polkadot', name: 'Polkadot', symbol: 'DOT' }
     ],
-    stockSymbols: [
-        { id: 'AAPL', name: 'Apple Inc.', display: 'AAPL' },
-        { id: 'MSFT', name: 'Microsoft', display: 'MSFT' },
-        { id: 'NVDA', name: 'Nvidia', display: 'NVDA' },
-        { id: 'GOOGL', name: 'Alphabet', display: 'GOOGL' },
-        { id: 'AMZN', name: 'Amazon', display: 'AMZN' },
-        { id: 'TSLA', name: 'Tesla', display: 'TSLA' },
-        { id: 'META', name: 'Meta Platforms', display: 'META' },
-        { id: 'NFLX', name: 'Netflix', display: 'NFLX' },
-        { id: 'AMD', name: 'AMD', display: 'AMD' },
-        { id: 'ORCL', name: 'Oracle', display: 'ORCL' },
-        { id: 'BRK.B', name: 'Berkshire B', display: 'BRK.B' },
-        { id: 'V', name: 'Visa Inc.', display: 'V' },
-        { id: 'JPM', name: 'JP Morgan', display: 'JPM' },
-        { id: 'WMT', name: 'Walmart', display: 'WMT' },
-        { id: 'MA', name: 'Mastercard', display: 'MA' },
-        { id: 'COST', name: 'Costco', display: 'COST' },
-        { id: 'BABA', name: 'Alibaba', display: 'BABA' },
-        { id: 'SHOP', name: 'Shopify', display: 'SHOP' },
-        { id: 'ADBE', name: 'Adobe', display: 'ADBE' },
-        { id: 'PYPL', name: 'PayPal', display: 'PYPL' }
-    ],
-    commoditySymbols: [
-        { id: 'GLD', name: 'Gold Index', display: 'XAU' },
-        { id: 'SLV', name: 'Silver Index', display: 'XAG' },
-        { id: 'USO', name: 'Crude Oil', display: 'WTI' },
-        { id: 'BNO', name: 'Brent Oil', display: 'BRENT' },
-        { id: 'UNG', name: 'Natural Gas', display: 'NAT' },
-        { id: 'PPLT', name: 'Platinum', display: 'PLT' },
-        { id: 'PALL', name: 'Palladium', display: 'PAL' },
-        { id: 'DBA', name: 'Agricultural', display: 'AGRI' },
-        { id: 'TR_GOLD_24K', name: '24 Ayar Gram Altın', display: 'Gram (TR)', virtual: true, flag: 'TR' },
-        { id: 'TR_GOLD_22K', name: '22 Ayar Gram Altın', display: 'Gram (TR)', virtual: true, flag: 'TR' },
-        { id: 'TR_GOLD_14K', name: '14 Ayar Gram Altın', display: 'Gram (TR)', virtual: true, flag: 'TR' },
-        { id: 'UA_GOLD_24K', name: '24K Gram Gold (UA)', display: 'Gram (UA)', virtual: true, flag: 'UA' },
-        { id: 'UA_GOLD_18K', name: '18K Gram Gold (UA)', display: 'Gram (UA)', virtual: true, flag: 'UA' },
-        { id: 'TR_SILVER', name: 'Has Gümüş (TR)', display: 'Gümüş', virtual: true, flag: 'TR' },
-        { id: 'UA_SILVER', name: 'Pure Silver (UA)', display: 'Silver', virtual: true, flag: 'UA' }
-    ],
-    forexSymbols: [
-        { id: 'OANDA:USD_TRY', name: 'USD/TRY', display: 'USD/TRY', flag: 'TR' },
-        { id: 'OANDA:EUR_TRY', name: 'EUR/TRY', display: 'EUR/TRY', flag: 'TR' },
-        { id: 'OANDA:GBP_TRY', name: 'GBP/TRY', display: 'GBP/TRY', flag: 'TR' },
-        { id: 'OANDA:EUR_USD', name: 'EUR/USD', display: 'EUR/USD', flag: 'EU' },
-        { id: 'OANDA:GBP_USD', name: 'GBP/USD', display: 'GBP/USD', flag: 'GB' },
-        { id: 'OANDA:USD_JPY', name: 'USD/JPY', display: 'USD/JPY', flag: 'JP' },
-        { id: 'OANDA:AUD_USD', name: 'AUD/USD', display: 'AUD/USD', flag: 'AU' },
-        { id: 'OANDA:USD_CAD', name: 'USD/CAD', display: 'USD/CAD', flag: 'CA' },
-        { id: 'OANDA:USD_CHF', name: 'USD/CHF', display: 'USD/CHF', flag: 'CH' },
-        { id: 'OANDA:NZD_USD', name: 'NZD/USD', display: 'NZD/USD', flag: 'NZ' },
-        { id: 'OANDA:USD_ZAR', name: 'USD/ZAR', display: 'USD/ZAR', flag: 'ZA' },
-        { id: 'OANDA:USD_SGD', name: 'USD/SGD', display: 'USD/SGD', flag: 'SG' },
-        { id: 'OANDA:USD_MXN', name: 'USD/MXN', display: 'USD/MXN', flag: 'MX' },
-        { id: 'OANDA:USD_CNH', name: 'USD/CNY', display: 'USD/CNY', flag: 'CN' },
-        { id: 'OANDA:USD_INR', name: 'USD/INR', display: 'USD/INR', flag: 'IN' },
-        { id: 'OANDA:USD_ILS', name: 'USD/ILS', display: 'USD/ILS', flag: 'IL' },
-        { id: 'OANDA:USD_UAH', name: 'USD/UAH', display: 'USD/UAH', flag: 'UA' },
-        { id: 'OANDA:EUR_UAH', name: 'EUR/UAH', display: 'EUR/UAH', flag: 'UA' },
-        { id: 'OANDA:GBP_UAH', name: 'GBP/UAH', display: 'GBP/UAH', flag: 'UA' }
-    ]
+    stocks: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX'],
+    commodities: ['GLD', 'SLV', 'UNG', 'USO'], // ETF equivalents for Gold, Silver, Natural Gas, Oil
 };
 
-const state = {
-    coins: {},
-    stocks: {},
-    commodities: {},
-    forex: {},
-    currentView: 'dashboard',
-    chartInstance: null,
-    socket: null,
-    activeSymbol: null,
-    chartData: [],
-    generalNewsCache: [],
-    alertHistory: new Set(),
-    exchangeRates: null // New storage for converter
-};
+let currentView = 'dashboard';
 
-// DOM Elements
-const cryptoGrid = document.getElementById('crypto-grid');
-const stocksGrid = document.getElementById('stocks-grid');
-const commoditiesGrid = document.getElementById('commodities-grid');
-const forexGrid = document.getElementById('forex-grid');
-const globalNewsFeed = document.getElementById('global-news-feed');
-const detailsModal = document.getElementById('details-modal');
-const modalTitle = document.getElementById('modal-title');
-const liveIndicator = document.getElementById('live-indicator');
-const assetNewsList = document.getElementById('asset-news-list');
-const recChart = document.getElementById('rec-chart');
-const recText = document.getElementById('rec-text');
-const priceChartDiv = document.getElementById('price-chart');
-const exchangesList = document.getElementById('exchanges-list');
-const marketStatsDiv = document.getElementById('market-stats');
-const searchInput = document.getElementById('search-input');
-const searchBtn = document.getElementById('search-btn');
-const toastContainer = document.getElementById('toast-container');
-
-// Converter Elements
-const convAmount = document.getElementById('conv-amount');
-const convFrom = document.getElementById('conv-from');
-const convTo = document.getElementById('conv-to');
-const convResult = document.getElementById('conv-result');
-const convRateInfo = document.getElementById('conv-rate-info');
-const convSwapBtn = document.getElementById('conv-swap');
-
-function init() {
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('System initializing...');
     setupNavigation();
-    setupSearch();
-    setupConverter();
-    updateDateTime();
-    initWebSocket();
-
-    // Stable Fetch Sequence
-    fetchExchangeRates().then(() => {
-        fetchPrices();
-        fetchStocks();
-        fetchCommodities();
-        fetchForex();
-    });
-    fetchGlobalNews();
-
-    setInterval(fetchPrices, 20000);
-    setInterval(fetchStocks, 60000);
-    setInterval(fetchCommodities, 60000);
-    setInterval(fetchForex, 60000);
-    setInterval(fetchExchangeRates, 3600000);
-    setInterval(updateDateTime, 1000);
-    setInterval(() => { fetchGlobalNews(state.currentView !== 'news'); }, 900000);
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW Registered', reg))
-                .catch(err => console.log('SW Registration failed', err));
-        });
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!refreshing) {
-                window.location.reload();
-                refreshing = true;
-            }
-        });
-    }
-}
-
-// --- CONVERTER LOGIC ---
-async function fetchExchangeRates() {
-    try {
-        const res = await fetch('/api/forex/latest');
-        const data = await res.json();
-        if (data.rates) {
-            state.exchangeRates = data.rates;
-            populateCurrencyDropdowns();
-            calculateConversion();
-            updateConverterChart();
-        }
-    } catch (e) { console.error('Exchange Rate API failed'); }
-}
-
-async function updateConverterChart() {
-    const from = convFrom.value;
-    const to = convTo.value;
-    const container = document.getElementById('converter-mini-chart');
-    if (!container) return;
-
-    try {
-        container.innerHTML = '<div style="color:#666; font-size:0.7rem; text-align:center; padding-top:20px">Loading Trend...</div>';
-
-        let symbol = `OANDA:${from}_${to}`;
-        const toVal = Math.floor(Date.now() / 1000);
-        const fromVal = toVal - (7 * 24 * 3600); // 7 days back
-
-        const fetchCandles = async (s) => {
-            const r = await fetch(`/api/candles?symbol=${s}&resolution=60&from=${fromVal}&to=${toVal}&type=forex`);
-            return await r.json();
-        };
-
-        let data = await fetchCandles(symbol);
-
-        if (data.s === 'ok') {
-            renderSparkline('converter-mini-chart', data.c.slice(-24), '#00e5ff');
-        } else {
-            // Try reverse
-            symbol = `OANDA:${to}_${from}`;
-            data = await fetchCandles(symbol);
-            if (data.s === 'ok') {
-                const inverted = data.c.slice(-24).map(v => 1 / v);
-                renderSparkline('converter-mini-chart', inverted, '#00e5ff');
-            } else {
-                container.innerHTML = '<div style="color:#444; font-size:0.8rem; text-align:center; padding-top:20px">Trend chart unavailable for this pair</div>';
-            }
-        }
-    } catch (e) {
-        container.innerHTML = '';
-    }
-}
-
-function populateCurrencyDropdowns() {
-    if (!state.exchangeRates || !convFrom || !convTo) return;
-
-    const currencies = Object.keys(state.exchangeRates).sort();
-    const fromVal = convFrom.value || 'USD';
-    const toVal = convTo.value || 'TRY';
-
-    convFrom.innerHTML = '';
-    convTo.innerHTML = '';
-
-    currencies.forEach(curr => {
-        const opt1 = document.createElement('option');
-        opt1.value = curr; opt1.textContent = curr;
-        if (curr === fromVal) opt1.selected = true;
-        convFrom.appendChild(opt1);
-
-        const opt2 = document.createElement('option');
-        opt2.value = curr; opt2.textContent = curr;
-        if (curr === toVal) opt2.selected = true;
-        convTo.appendChild(opt2);
-    });
-}
-
-function setupConverter() {
-    if (!convAmount) return;
-    const calc = () => {
-        calculateConversion();
-        updateConverterChart();
-    };
-    convAmount.addEventListener('input', calculateConversion); // Just recalc amount on typing
-    convFrom.addEventListener('change', calc);
-    convTo.addEventListener('change', calc);
-
-    if (convSwapBtn) {
-        convSwapBtn.onclick = () => {
-            const temp = convFrom.value;
-            convFrom.value = convTo.value;
-            convTo.value = temp;
-            calc();
-        };
-    }
-}
-
-function calculateConversion() {
-    if (!state.exchangeRates || !convAmount || !convResult) return;
-
-    const amount = parseFloat(convAmount.value) || 0;
-    const from = convFrom.value;
-    const to = convTo.value;
-
-    const fromRate = state.exchangeRates[from];
-    const toRate = state.exchangeRates[to];
-
-    if (fromRate && toRate) {
-        const result = (amount * toRate) / fromRate;
-        convResult.textContent = result.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-        const singleRate = (1 * toRate) / fromRate;
-        convRateInfo.textContent = `1 ${from} = ${singleRate.toFixed(4)} ${to}`;
-    }
-}
-
-// --- CORE SYSTEM ---
-function initWebSocket() {
-    // Note: Live WebSocket usually requires a client-side key. 
-    // If config.apiKey is removed, we gracefully disable live updates for now.
-    console.log('WebSocket: Live updates disabled in backend-mode (requires secure proxying)');
-}
-
-function handleTrade(trades) {
-    if (!state.activeSymbol) return;
-    const relevantTrades = trades.filter(t => t.s === state.activeSymbol);
-    if (relevantTrades.length === 0) return;
-    const lastTrade = relevantTrades[relevantTrades.length - 1];
-    const price = lastTrade.p;
-
-    const activeItem = state.coins[state.activeSymbol] || state.stocks[state.activeSymbol] || state.commodities[state.activeSymbol] || state.forex[state.activeSymbol] || { name: state.activeSymbol, price: 0 };
-    modalTitle.innerHTML = `<div style="display:flex; align-items:center; gap:10px">
-        <span style="font-size:1.5rem">${activeItem.name}</span>
-        <span style="font-weight:400; font-size:1.2rem; color:${getPriceColor(price, activeItem.price)}">$${price}</span>
-     </div>`;
-    activeItem.price = price;
-    updateChartLive(price, lastTrade.t);
-}
-
-function getPriceColor(newPrice, oldPrice) {
-    if (!oldPrice) return '#fff';
-    return newPrice >= oldPrice ? '#00c853' : '#ff3d00';
-}
+    initClock();
+    startDataCycles();
+});
 
 function setupNavigation() {
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
+    document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
-            navItems.forEach(n => n.classList.remove('active'));
+            const target = item.dataset.target;
+            currentView = target;
+
+            // Update UI
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            item.classList.add('active');
+
             document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            item.classList.add('active');
-            const target = item.dataset.target;
-            state.currentView = target;
+
             const view = document.getElementById(`view-${target}`);
             if (view) {
                 view.classList.remove('hidden');
                 view.classList.add('active');
-                if (target === 'news') fetchGlobalNews();
+                updatePageTitle(target);
+                fetchCurrentViewData();
             }
-            document.getElementById('page-title').textContent = item.textContent.trim();
         });
     });
-    document.getElementById('close-modal').onclick = closeModal;
 }
 
-function setupSearch() {
-    searchBtn.addEventListener('click', handleSearch);
-    searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearch(); });
+function updatePageTitle(view) {
+    const titles = {
+        'dashboard': 'Market Overview',
+        'stocks': 'Stock Market',
+        'commodities': 'Commodities',
+        'forex': 'Foreign Exchange',
+        'news': 'Global News',
+        'settings': 'Settings'
+    };
+    document.getElementById('page-title').innerText = titles[view] || 'Market';
 }
 
-async function handleSearch() {
-    const query = searchInput.value.toUpperCase().trim();
-    if (!query) return;
-    searchBtn.innerHTML = '⏳';
-    const cryptoSymbol = `BINANCE:${query}USDT`;
-    try {
-        const res = await fetch(`/api/quote?symbol=${cryptoSymbol}`);
-        const data = await res.json();
-        if (data.c > 0) {
-            openDetails({ id: cryptoSymbol, name: query, display: query, price: data.c, change: data.d, percentChange: data.dp, cg_id: null }, 'crypto');
-            searchInput.value = ''; searchBtn.innerHTML = '🔍'; return;
-        }
-    } catch (e) { }
-    try {
-        const res = await fetch(`/api/quote?symbol=${query}`);
-        const data = await res.json();
-        if (data.c > 0) {
-            openDetails({ id: query, name: query, display: query, price: data.c, change: data.d, percentChange: data.dp }, 'stock');
-            searchInput.value = ''; searchBtn.innerHTML = '🔍'; return;
-        }
-    } catch (e) { }
-    alert(`Asset '${query}' not found.`);
-    searchBtn.innerHTML = '🔍';
+function initClock() {
+    const clockEl = document.getElementById('date-display');
+    const update = () => {
+        const now = new Date();
+        clockEl.innerHTML = `
+            <div class="clock-digits">${now.toLocaleTimeString('tr-TR')}</div>
+            <div class="date-text">${now.toLocaleDateString('tr-TR')}</div>
+        `;
+    };
+    update();
+    setInterval(update, 1000);
 }
 
-function closeModal() {
-    detailsModal.classList.add('hidden');
-    if (state.chartInstance) { state.chartInstance.destroy(); state.chartInstance = null; }
-    if (state.activeSymbol && state.socket.readyState === WebSocket.OPEN) {
-        state.socket.send(JSON.stringify({ 'type': 'unsubscribe', 'symbol': state.activeSymbol }));
+function startDataCycles() {
+    fetchCurrentViewData();
+    setInterval(() => {
+        fetchCurrentViewData();
+    }, 30000); // Update every 30s
+}
+
+function fetchCurrentViewData() {
+    switch (currentView) {
+        case 'dashboard': fetchCrypto(); break;
+        case 'stocks': fetchStocks(); break;
+        case 'commodities': fetchCommodities(); break;
+        case 'forex': fetchForex(); break;
+        case 'news': fetchNews(); break;
     }
-    state.activeSymbol = null;
-    liveIndicator.style.display = 'none';
 }
 
-function updateDateTime() {
-    const d = new Date();
-    const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const timeStr = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const display = document.getElementById('date-display');
-    if (display) display.innerHTML = `<div class="date-text">${dateStr}</div><div class="clock-digits">${timeStr}</div>`;
-}
+async function fetchCrypto() {
+    const grid = document.getElementById('crypto-grid');
+    if (!grid) return;
 
-// --- FETCHERS ---
-async function fetchPrices() {
     try {
-        // Fetch from Backend (CoinGecko Proxy)
-        const ids = config.symbols.map(s => s.cg_id).join(',');
+        const ids = config.crypto.map(c => c.id).join(',');
         const res = await fetch(`/api/crypto/markets?ids=${ids}`);
         const data = await res.json();
 
-        data.forEach(coin => {
-            const sym = config.symbols.find(s => s.cg_id === coin.id);
-            if (sym) {
-                state.coins[sym.id] = {
-                    ...sym,
-                    price: coin.current_price,
-                    change: coin.price_change_24h,
-                    percentChange: coin.price_change_percentage_24h_in_currency,
-                    sparkline: coin.sparkline_in_7d.price.slice(-24) // Last 24 points
-                };
-                checkAlerts(state.coins[sym.id]);
-            }
-        });
-        renderGrid(state.coins, cryptoGrid, true);
+        renderGrid(grid, data.map(coin => ({
+            name: coin.name,
+            symbol: coin.symbol.toUpperCase(),
+            price: coin.current_price ? `$${coin.current_price.toLocaleString()}` : 'N/A',
+            change: coin.price_change_percentage_24h || 0,
+            id: coin.id
+        })));
     } catch (e) {
-        // Fallback to legacy (Requires proxy support)
-        const queue = [...config.symbols];
-        await Promise.all(queue.map(async (coin) => {
-            try {
-                const res = await fetch(`/api/quote?symbol=${coin.id}`);
-                const data = await res.json();
-                state.coins[coin.id] = { ...coin, price: data.c, change: data.d, percentChange: data.dp };
-            } catch (e) { }
-        }));
-        renderGrid(state.coins, cryptoGrid, true);
+        console.error('Crypto error', e);
+        showToast('Error loading crypto data');
     }
 }
 
 async function fetchStocks() {
-    for (const stock of config.stockSymbols) {
-        try {
-            // 1. Fetch Quote (Price) - Essential
-            const res = await fetch(`/api/quote?symbol=${stock.id}`);
-            const data = await res.json();
-            if (!data.c) {
-                console.warn(`No quote data for ${stock.id}, skipping.`);
-                continue;
-            }
+    const grid = document.getElementById('stocks-grid');
+    if (!grid) return;
 
-            state.stocks[stock.id] = {
-                ...stock,
-                price: data.c,
-                change: data.d,
-                percentChange: data.dp,
-                sparkline: []
-            };
+    try {
+        const res = await fetch(`/api/stocks?symbols=${config.stocks.join(',')}`);
+        const data = await res.json();
 
-            // render immediately with price
-            renderCard(state.stocks[stock.id], stocksGrid, false);
-
-            // 2. Fetch Candles (Chart) - Optional
-            try {
-                const to = Math.floor(Date.now() / 1000);
-                const from = to - (7 * 24 * 3600);
-                const candleRes = await fetch(`/api/candles?symbol=${stock.id}&resolution=60&from=${from}&to=${to}&type=stock`);
-                const candleData = await candleRes.json();
-                if (candleData.s === 'ok' && candleData.c) {
-                    state.stocks[stock.id].sparkline = candleData.c.slice(-24);
-                    renderCard(state.stocks[stock.id], stocksGrid, false); // Update with chart
-                } else {
-                    console.warn(`No valid candle data for ${stock.id}. Status: ${candleData.s}`);
-                }
-            } catch (e) { console.warn(`Chart failed for ${stock.id}`, e); }
-
-            await new Promise(r => setTimeout(r, 300));
-        } catch (e) { console.error(`Stock fetch failed for ${stock.id}`, e); }
+        renderGrid(grid, data.map(s => ({
+            name: s.symbol,
+            symbol: s.symbol,
+            price: `$${s.price.toFixed(2)}`,
+            change: s.change,
+            id: s.symbol
+        })));
+    } catch (e) {
+        console.error('Stocks error', e);
     }
 }
 
 async function fetchCommodities() {
-    const queue = config.commoditySymbols.filter(c => !c.virtual);
-    const virtuals = config.commoditySymbols.filter(c => c.virtual);
+    const grid = document.getElementById('commodities-grid');
+    if (!grid) return;
 
-    for (const com of queue) {
-        try {
-            const res = await fetch(`/api/quote?symbol=${com.id}`);
-            const data = await res.json();
-            if (!data.c) continue;
+    try {
+        const res = await fetch(`/api/stocks?symbols=${config.commodities.join(',')}`);
+        const data = await res.json();
 
-            state.commodities[com.id] = {
-                ...com,
-                price: data.c,
-                change: data.d,
-                percentChange: data.dp,
-                sparkline: []
-            };
-            renderCard(state.commodities[com.id], commoditiesGrid, false);
+        const names = { 'GLD': 'Gold', 'SLV': 'Silver', 'UNG': 'Nat Gas', 'USO': 'Oil' };
 
-            try {
-                const to = Math.floor(Date.now() / 1000);
-                const from = to - (7 * 24 * 3600);
-                const candleRes = await fetch(`/api/candles?symbol=${com.id}&resolution=60&from=${from}&to=${to}&type=stock`);
-                const candleData = await candleRes.json();
-                if (candleData.s === 'ok' && candleData.c) {
-                    state.commodities[com.id].sparkline = candleData.c.slice(-24);
-                    renderCard(state.commodities[com.id], commoditiesGrid, false);
-                }
-            } catch (e) { }
-
-            await new Promise(r => setTimeout(r, 300));
-        } catch (e) { }
-    }
-
-    // Refresh Virtuals after base data (GLD/SLV) is ready
-    setTimeout(() => {
-        calculateVirtualCommodities();
-    }, 2000);
-}
-
-function calculateVirtualCommodities() {
-    console.log('Calculating virtual commodities...');
-    const virtuals = config.commoditySymbols.filter(c => c.virtual);
-    const spotGold = state.commodities['GLD']?.price || 0;
-    const spotSilver = state.commodities['SLV']?.price || 0;
-    const goldSpark = state.commodities['GLD']?.sparkline || [];
-    const silverSpark = state.commodities['SLV']?.sparkline || [];
-    const tryRate = state.exchangeRates?.TRY || 0;
-    const uahRate = state.exchangeRates?.UAH || 0;
-
-    if (spotGold && tryRate) {
-        const prices = { '24K': 1, '22K': 0.916, '18K': 0.750, '14K': 0.585 };
-        const scaleFactor = tryRate / 31.1035;
-        const goldChange = state.commodities['GLD']?.change || 0;
-        const goldPct = state.commodities['GLD']?.percentChange || 0;
-
-        ['24K', '22K', '14K'].forEach(k => {
-            const id = `TR_GOLD_${k}`;
-            const purity = prices[k];
-            state.commodities[id] = {
-                ...virtuals.find(v => v.id === id),
-                price: (spotGold / 31.1035) * tryRate * purity,
-                currency: '₺',
-                sparkline: goldSpark.length ? goldSpark.map(v => v * scaleFactor * purity) : [],
-                change: goldChange * scaleFactor * purity,
-                percentChange: goldPct
-            };
-            renderCard(state.commodities[id], commoditiesGrid, false);
-        });
-
-        if (uahRate) {
-            const uahScale = uahRate / 31.1035;
-            ['24K', '18K'].forEach(k => {
-                const id = `UA_GOLD_${k}`;
-                const purity = prices[k];
-                state.commodities[id] = {
-                    ...virtuals.find(v => v.id === id),
-                    price: (spotGold / 31.1035) * uahRate * purity,
-                    currency: '₴',
-                    sparkline: goldSpark.length ? goldSpark.map(v => v * uahScale * purity) : [],
-                    change: goldChange * uahScale * purity,
-                    percentChange: goldPct
-                };
-                renderCard(state.commodities[id], commoditiesGrid, false);
-            });
-        }
-    }
-
-    if (spotSilver && tryRate) {
-        const silverScale = tryRate / 31.1035;
-        const silverChange = state.commodities['SLV']?.change || 0;
-        const silverPct = state.commodities['SLV']?.percentChange || 0;
-
-        state.commodities['TR_SILVER'] = {
-            ...virtuals.find(v => v.id === 'TR_SILVER'),
-            price: (spotSilver / 31.1035) * tryRate,
-            currency: '₺',
-            sparkline: silverSpark.length ? silverSpark.map(v => v * silverScale) : [],
-            change: silverChange * silverScale,
-            percentChange: silverPct
-        };
-        renderCard(state.commodities['TR_SILVER'], commoditiesGrid, false);
-
-        if (uahRate) {
-            const uaSilverScale = uahRate / 31.1035;
-            state.commodities['UA_SILVER'] = {
-                ...virtuals.find(v => v.id === 'UA_SILVER'),
-                price: (spotSilver / 31.1035) * uahRate,
-                currency: '₴',
-                sparkline: silverSpark.length ? silverSpark.map(v => v * uaSilverScale) : [],
-                change: silverChange * uaSilverScale,
-                percentChange: silverPct
-            };
-            renderCard(state.commodities['UA_SILVER'], commoditiesGrid, false);
-        }
+        renderGrid(grid, data.map(s => ({
+            name: names[s.symbol] || s.symbol,
+            symbol: s.symbol,
+            price: `$${s.price.toFixed(2)}`,
+            change: s.change,
+            id: s.symbol
+        })));
+    } catch (e) {
+        console.error('Commodities error', e);
     }
 }
 
 async function fetchForex() {
-    for (const fx of config.forexSymbols) {
-        try {
-            const res = await fetch(`/api/quote?symbol=${fx.id}`);
-            const data = await res.json();
+    const grid = document.getElementById('forex-grid');
+    if (!grid) return;
 
-            state.forex[fx.id] = {
-                ...fx,
-                price: data.c,
-                change: data.d,
-                percentChange: data.dp,
-                sparkline: []
-            };
-            renderCard(state.forex[fx.id], forexGrid, false);
-
-            try {
-                const to = Math.floor(Date.now() / 1000);
-                const from = to - (7 * 24 * 3600);
-                const candleRes = await fetch(`/api/candles?symbol=${fx.id}&resolution=60&from=${from}&to=${to}&type=forex`);
-                const candleData = await candleRes.json();
-                if (candleData.s === 'ok' && candleData.c) {
-                    state.forex[fx.id].sparkline = candleData.c.slice(-24);
-                    renderCard(state.forex[fx.id], forexGrid, false);
-                }
-            } catch (e) { }
-
-            await new Promise(r => setTimeout(r, 300));
-        } catch (e) { }
-    }
-}
-
-function renderGrid(collection, container, isCrypto) {
-    if (Object.keys(collection).length > 0 && container.querySelector('.loading')) container.innerHTML = '';
-    // Cards are now rendered incrementally within the fetch functions
-}
-
-function renderCard(item, container, isCrypto) {
-    let card = document.getElementById(`card-${item.id}`);
-    if (!card) {
-        card = document.createElement('div');
-        card.id = `card-${item.id}`;
-        card.className = `crypto-card ${item.change >= 0 ? 'up' : 'down'}`;
-        card.onclick = () => openDetails(item, isCrypto ? 'crypto' : 'stock');
-        container.appendChild(card);
-    }
-    const isUp = (item.change >= 0);
-    let iconSrc;
-    if (isCrypto) iconSrc = `https://assets.coincap.io/assets/icons/${item.display.toLowerCase()}@2x.png`;
-    else {
-        if (item.display === 'XAU') iconSrc = 'https://via.placeholder.com/32/FFD700/000000?text=Au';
-        else if (item.display === 'XAG') iconSrc = 'https://via.placeholder.com/32/C0C0C0/000000?text=Ag';
-        else if (item.display === 'WTI') iconSrc = 'https://via.placeholder.com/32/000000/FFFFFF?text=Oil';
-        else if (item.flag) iconSrc = `https://purecatamphetamine.github.io/country-flag-icons/3x2/${item.flag}.svg`;
-        else iconSrc = `https://logo.clearbit.com/${item.name.split(' ')[0].toLowerCase()}.com`;
-    }
-    const containerId = `spark-${item.id.replace(/[:_]/g, '-')}`;
-    card.innerHTML = `
-        <div class="card-header">
-            <div style="display:flex; align-items:center; gap:8px">
-                <img src="${iconSrc}" onerror="this.src='https://via.placeholder.com/32/333/fff?text=${item.display[0]}'" class="coin-logo ${item.flag ? 'flag-icon' : ''}" alt="${item.display}">
-                <div>
-                    <span style="font-weight:600; font-size:0.9rem; display:block; line-height:1.1">${item.name}</span>
-                    <span style="color:#666; font-size:0.7rem">${item.display}</span>
-                </div>
-            </div>
-            <div class="change-badge ${(isUp || !item.change) ? 'change-up' : 'change-down'}">
-                ${(isUp || !item.change) ? '+' : ''}${item.percentChange ? Number(item.percentChange).toFixed(1) : '0'}%
-            </div>
-        </div>
-        <div class="coin-price">${item.currency || '$'}${item.price ? Number(item.price).toFixed(item.price < 1 ? 4 : 2) : '--'}</div>
-        <div class="sparkline-container" id="${containerId}"></div>
-    `;
-    card.className = `crypto-card ${isUp ? 'up' : 'down'}`;
-
-    if (item.sparkline && item.sparkline.length > 0) {
-        // Explicitly wait for DOM to be ready for ApexCharts
-        setTimeout(() => {
-            renderSparkline(containerId, item.sparkline, isUp ? '#00c853' : '#ff3d00');
-        }, 100);
-    }
-}
-
-function renderSparkline(containerId, data, color) {
-    const options = {
-        series: [{ data: data }],
-        chart: {
-            type: 'line',
-            height: 40,
-            sparkline: { enabled: true },
-            animations: { enabled: false }
-        },
-        stroke: { curve: 'smooth', width: 2 },
-        colors: [color],
-        tooltip: { enabled: false }
-    };
-    const el = document.getElementById(containerId);
-    if (!el) return;
-    el.innerHTML = '';
-    const chart = new ApexCharts(el, options);
-    chart.render();
-}
-
-async function fetchGlobalNews(cacheOnly = false) {
-    if (!cacheOnly) globalNewsFeed.innerHTML = '<div class="loading">Küresel haberler yükleniyor...</div>';
     try {
-        const [cryptoRes, generalRes] = await Promise.all([
-            fetch(`/api/news?category=crypto`),
-            fetch(`/api/news?category=general`)
-        ]);
-        const crypto = await cryptoRes.json();
-        const general = await generalRes.json();
+        const res = await fetch('/api/forex');
+        const data = await res.json();
 
-        const merged = [...(Array.isArray(crypto) ? crypto : []), ...(Array.isArray(general) ? general : [])]
-            .sort((a, b) => b.datetime - a.datetime);
+        renderGrid(grid, data.map(f => ({
+            name: f.symbol,
+            symbol: f.symbol,
+            price: f.price.toFixed(4),
+            change: f.change,
+            id: f.symbol
+        })));
 
-        state.generalNewsCache = merged;
-        if (!cacheOnly) {
-            if (merged.length === 0) {
-                globalNewsFeed.innerHTML = '<div style="text-align:center; padding:20px; color:#666">Şu an için haber bulunamadı.</div>';
-            } else {
-                renderNewsList(merged);
-            }
-        }
+        if (data.length > 0) updateConverter(data);
     } catch (e) {
-        console.error('News fetch failed:', e);
-        if (!cacheOnly) globalNewsFeed.innerHTML = '<div style="text-align:center; padding:20px; color:#ff3d00">Haberler yüklenirken bir hata oluştu.</div>';
+        console.error('Forex error', e);
     }
 }
 
-function renderNewsList(articles) {
-    globalNewsFeed.innerHTML = '';
-    articles.slice(0, 20).forEach(news => {
+async function fetchNews() {
+    const feed = document.getElementById('global-news-feed');
+    if (!feed) return;
+
+    try {
+        const res = await fetch('/api/news');
+        const data = await res.json();
+        feed.innerHTML = '';
+        data.slice(0, 15).forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'news-card';
+            card.innerHTML = `
+                ${item.image ? `<img src="${item.image}" class="news-image">` : ''}
+                <div class="news-content">
+                    <a href="${item.url}" target="_blank" class="news-title">${item.headline}</a>
+                    <div class="news-source">${item.source} • ${new Date(item.datetime * 1000).toLocaleTimeString()}</div>
+                </div>
+            `;
+            feed.appendChild(card);
+        });
+    } catch (e) {
+        console.error('News error', e);
+    }
+}
+
+function renderGrid(container, items) {
+    container.innerHTML = '';
+    items.forEach(item => {
         const card = document.createElement('div');
-        card.className = 'news-card';
+        const isUp = item.change >= 0;
+        card.className = `crypto-card ${isUp ? 'up' : 'down'}`;
         card.innerHTML = `
-            <img src="${news.image || 'https://via.placeholder.com/200x150?text=News'}" class="news-image" onerror="this.src='https://via.placeholder.com/200x150?text=News'">
-            <div class="news-content">
-                <div><a href="${n.url}" target="_blank" class="news-title">${n.headline}</a>
-                <p style="color:#aaa; font-size:0.9rem; margin-top:5px">${n.summary.substring(0, 120)}...</p></div>
-                <div class="news-source">${n.source} • ${new Date(n.datetime * 1000).toLocaleTimeString()}</div>
-            </div>`;
-        globalNewsFeed.appendChild(card);
+            <div class="card-header">
+                <span class="coin-name">${item.name}</span>
+                <span class="change-badge ${isUp ? 'change-up' : 'change-down'}">${isUp ? '▲' : '▼'} ${Math.abs(item.change || 0).toFixed(2)}%</span>
+            </div>
+            <div class="price-row">
+                <div class="coin-price">${item.price}</div>
+                <div class="coin-symbol" style="font-size: 0.7rem; color: #888">${item.symbol}</div>
+            </div>
+        `;
+        container.appendChild(card);
     });
 }
 
-function checkAlerts(item) {
-    if (!item.percentChange) return;
-    const pct = parseFloat(item.percentChange);
-    if (Math.abs(pct) >= 5) {
-        const alertId = `${item.id}_${pct > 0 ? 'UP' : 'DOWN'}`;
-        if (!state.alertHistory.has(alertId)) {
-            showToast(`${item.display} Moving!`, `${item.name} is ${pct > 0 ? 'up' : 'down'} ${Math.abs(pct).toFixed(2)}%`, pct > 0 ? 'down' : 'up');
-            state.alertHistory.add(alertId);
-        }
-    }
-}
+function updateConverter(data) {
+    const fromSelect = document.getElementById('conv-from');
+    const toSelect = document.getElementById('conv-to');
 
-function showToast(title, body, type) {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<div class="toast-header">${title}</div><div class="toast-body">${body}</div>`;
-    toastContainer.appendChild(toast);
-    setTimeout(() => { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); }, 5000);
-}
-
-// --- MODAL & CHARTS ---
-async function openDetails(item, type) {
-    state.activeSymbol = item.id;
-    const isVirtual = item.virtual;
-    const baseId = item.id.startsWith('TR_GOLD') || item.id.startsWith('UA_GOLD') ? 'GLD' :
-        (item.id.startsWith('TR_SILVER') || item.id.startsWith('UA_SILVER') ? 'SLV' : item.id);
-
-    modalTitle.innerHTML = `<div style="display:flex; align-items:center; gap:10px">
-        <span style="font-size:1.5rem">${item.name}</span>
-        <span style="font-weight:400; font-size:1.2rem; color:${getPriceColor(item.price, 0)}">${item.currency || '$'}${item.price ? Number(item.price).toLocaleString() : '--'}</span>
-    </div>`;
-    detailsModal.classList.remove('hidden');
-
-    // 1. Fetch & Render 30-day Chart
-    const to = Math.floor(Date.now() / 1000);
-    const from = to - (30 * 24 * 3600);
-    const apiType = (type === 'crypto' || type === 'forex') ? type : 'stock';
-
-    priceChartDiv.innerHTML = '<div class="loading">Loading Historical Data...</div>';
-
-    try {
-        const res = await fetch(`/api/candles?symbol=${baseId}&resolution=D&from=${from}&to=${to}&type=${apiType}`);
-        const data = await res.json();
-        if (data.s === 'ok' && data.c && data.c.length > 0) {
-            let prices = data.c;
-            if (isVirtual) {
-                const rate = item.id.includes('TR') ? (state.exchangeRates?.TRY || 1) : (state.exchangeRates?.UAH || 1);
-                const purity = item.id.includes('24K') ? 1 : (item.id.includes('22K') ? 0.916 : (item.id.includes('18K') ? 0.75 : (item.id.includes('14K') ? 0.585 : 1)));
-                const scale = rate / 31.1035;
-                prices = prices.map(p => p * scale * purity);
-            }
-            renderChart(prices, data.t.map(t => new Date(t * 1000).toLocaleDateString()));
-        } else {
-            priceChartDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#666">Historical data temporarily unavailable for this asset.</div>';
-        }
-    } catch (e) {
-        console.error('Modal Chart failed', e);
-        priceChartDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#ff3d00">Error loading chart data.</div>';
-    }
-
-    // 2. Fetch & Render News
-    try {
-        const newsRes = await fetch(`/api/news?category=${type === 'crypto' ? 'crypto' : 'general'}`);
-        const news = await newsRes.json();
-        assetNewsList.innerHTML = '';
-        news.slice(0, 5).forEach(n => {
-            const li = document.createElement('li');
-            li.style.marginBottom = '15px';
-            li.innerHTML = `<a href="${n.url}" target="_blank" style="color:#00e5ff; text-decoration:none; font-weight:600">${n.headline}</a>
-                            <p style="font-size:0.8rem; color:#888; margin-top:3px">${n.source} • ${new Date(n.datetime * 1000).toLocaleDateString()}</p>`;
-            assetNewsList.appendChild(li);
+    if (fromSelect.options.length === 0) {
+        const currencies = ['USD', 'EUR', 'TRY', 'GBP', 'JPY'];
+        currencies.forEach(c => {
+            fromSelect.add(new Option(c, c));
+            toSelect.add(new Option(c, c));
         });
-    } catch (e) { }
+        toSelect.value = 'TRY';
+    }
+
+    const amount = parseFloat(document.getElementById('conv-amount').value) || 0;
+    const from = fromSelect.value;
+    const to = toSelect.value;
+
+    if (from === to) {
+        document.getElementById('conv-result').innerText = amount.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+        document.getElementById('conv-rate-info').innerText = `1 ${from} = 1.0000 ${to}`;
+        return;
+    }
+
+    let rate = 0;
+    // Attempt to find rate in data
+    const pairSymbol = `${from}/${to}`;
+    const inverseSymbol = `${to}/${from}`;
+
+    const directMatch = data.find(d => d.symbol === pairSymbol);
+    if (directMatch) {
+        rate = directMatch.price;
+    } else {
+        const inverseMatch = data.find(d => d.symbol === inverseSymbol);
+        if (inverseMatch && inverseMatch.price !== 0) {
+            rate = 1 / inverseMatch.price;
+        }
+    }
+
+    // Fallback if not found in forex data but we have cross rates
+    if (rate === 0) {
+        // Try cross conversion through USD if available
+        const usdToFrom = data.find(d => d.symbol === `USD/${from}`);
+        const usdToTo = data.find(d => d.symbol === `USD/${to}`);
+
+        if (usdToFrom && usdToTo && usdToFrom.price !== 0) {
+            rate = usdToTo.price / usdToFrom.price;
+        }
+    }
+
+    const result = amount * rate;
+    document.getElementById('conv-result').innerText = rate > 0 ? result.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) : 'Rate N/A';
+    document.getElementById('conv-rate-info').innerText = rate > 0 ? `1 ${from} = ${rate.toFixed(4)} ${to}` : 'Rate Unavailable';
 }
 
-function renderChart(data, labels) {
-    const options = {
-        series: [{ name: 'Price', data: data }],
-        chart: { type: 'area', height: 350, toolbar: { show: false }, background: 'transparent' },
-        colors: ['#2962ff'],
-        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0 } },
-        stroke: { curve: 'smooth', width: 3 },
-        xaxis: { categories: labels, labels: { style: { colors: '#666' } } },
-        yaxis: { labels: { style: { colors: '#666' }, formatter: (v) => v.toFixed(2) } },
-        grid: { borderColor: '#222' },
-        theme: { mode: 'dark' },
-        tooltip: { theme: 'dark' }
-    };
-    if (state.chartInstance) state.chartInstance.destroy();
-    state.chartInstance = new ApexCharts(document.getElementById('price-chart'), options);
-    state.chartInstance.render();
+function showToast(message) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }
 
-init();
+// Event listeners for converter
+document.getElementById('conv-amount')?.addEventListener('input', () => fetchForex());
+document.getElementById('conv-from')?.addEventListener('change', () => fetchForex());
+document.getElementById('conv-to')?.addEventListener('change', () => fetchForex());
+document.getElementById('conv-swap')?.addEventListener('click', () => {
+    const f = document.getElementById('conv-from');
+    const t = document.getElementById('conv-to');
+    const temp = f.value;
+    f.value = t.value;
+    t.value = temp;
+    fetchForex();
+});
