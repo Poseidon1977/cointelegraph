@@ -7,10 +7,22 @@ const config = {
         { id: 'ripple', name: 'XRP', symbol: 'XRP' },
         { id: 'cardano', name: 'Cardano', symbol: 'ADA' },
         { id: 'dogecoin', name: 'Dogecoin', symbol: 'DOGE' },
-        { id: 'polkadot', name: 'Polkadot', symbol: 'DOT' }
+        { id: 'polkadot', name: 'Polkadot', symbol: 'DOT' },
+        { id: 'polygon', name: 'Polygon', symbol: 'MATIC' },
+        { id: 'chainlink', name: 'Chainlink', symbol: 'LINK' },
+        { id: 'uniswap', name: 'Uniswap', symbol: 'UNI' },
+        { id: 'avalanche-2', name: 'Avalanche', symbol: 'AVAX' },
+        { id: 'cosmos', name: 'Cosmos', symbol: 'ATOM' },
+        { id: 'litecoin', name: 'Litecoin', symbol: 'LTC' },
+        { id: 'bitcoin-cash', name: 'Bitcoin Cash', symbol: 'BCH' },
+        { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB' },
+        { id: 'tron', name: 'Tron', symbol: 'TRX' },
+        { id: 'near', name: 'NEAR Protocol', symbol: 'NEAR' },
+        { id: 'aptos', name: 'Aptos', symbol: 'APT' },
+        { id: 'internet-computer', name: 'Internet Computer', symbol: 'ICP' }
     ],
-    stocks: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX'],
-    commodities: ['GLD', 'SLV', 'UNG', 'USO'], // ETF equivalents for Gold, Silver, Natural Gas, Oil
+    stocks: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC', 'BABA', 'JPM', 'V', 'WMT', 'DIS'],
+    commodities: ['GOLD', 'SILVER'], // Will fetch real precious metals prices
 };
 
 let currentView = 'dashboard';
@@ -75,7 +87,7 @@ function startDataCycles() {
     fetchCurrentViewData();
     setInterval(() => {
         fetchCurrentViewData();
-    }, 30000); // Update every 30s
+    }, 60000); // Update every 60s (optimized from 30s)
 }
 
 function fetchCurrentViewData() {
@@ -135,22 +147,22 @@ async function fetchCommodities() {
     if (!grid) return;
 
     try {
-        const res = await fetch(`/api/stocks?symbols=${config.commodities.join(',')}`);
+        const res = await fetch('/api/precious-metals');
         const data = await res.json();
 
-        const names = { 'GLD': 'Gold', 'SLV': 'Silver', 'UNG': 'Nat Gas', 'USO': 'Oil' };
-
-        renderGrid(grid, data.map(s => ({
-            name: names[s.symbol] || s.symbol,
-            symbol: s.symbol,
-            price: `$${s.price.toFixed(2)}`,
-            change: s.change,
-            id: s.symbol
+        renderGrid(grid, data.map(metal => ({
+            name: metal.name,
+            symbol: metal.symbol,
+            price: `$${metal.pricePerGram.toFixed(2)}/g`,
+            change: metal.change,
+            id: metal.symbol,
+            subtitle: `Ons: $${metal.pricePerOunce.toFixed(2)}`
         })));
     } catch (e) {
         console.error('Commodities error', e);
     }
 }
+
 
 async function fetchForex() {
     const grid = document.getElementById('forex-grid');
@@ -283,10 +295,25 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Event listeners for converter
-document.getElementById('conv-amount')?.addEventListener('input', () => fetchForex());
-document.getElementById('conv-from')?.addEventListener('change', () => fetchForex());
-document.getElementById('conv-to')?.addEventListener('change', () => fetchForex());
+// Debounce helper function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Event listeners for converter with debouncing
+const debouncedFetchForex = debounce(() => fetchForex(), 300);
+
+document.getElementById('conv-amount')?.addEventListener('input', debouncedFetchForex);
+document.getElementById('conv-from')?.addEventListener('change', debouncedFetchForex);
+document.getElementById('conv-to')?.addEventListener('change', debouncedFetchForex);
 document.getElementById('conv-swap')?.addEventListener('click', () => {
     const f = document.getElementById('conv-from');
     const t = document.getElementById('conv-to');

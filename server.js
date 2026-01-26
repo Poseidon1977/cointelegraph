@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const compression = require('compression');
 require('dotenv').config();
 
 const app = express();
@@ -12,11 +13,12 @@ if (!FINNHUB_KEY) {
 }
 
 app.use(cors());
+app.use(compression()); // Enable gzip compression for all responses
 app.use(express.static(__dirname));
 
 // Cache to prevent hitting rate limits too fast (simple in-memory)
 const cache = new Map();
-const CACHE_DURATION = 30000; // 30 seconds
+const CACHE_DURATION = 120000; // 120 seconds (optimized from 30s)
 
 const getCachedData = (key) => {
     const cached = cache.get(key);
@@ -113,6 +115,52 @@ app.get('/api/forex', async (req, res) => {
     } catch (e) {
         console.error('Forex error:', e.message);
         res.json([]);
+    }
+});
+
+// Precious metals endpoint - Gold and Silver per gram
+app.get('/api/precious-metals', async (req, res) => {
+    try {
+        const cacheKey = 'precious_metals';
+        const cached = getCachedData(cacheKey);
+        if (cached) return res.json(cached);
+
+        // Fetch gold and silver prices (per ounce from Finnhub, convert to grams)
+        const goldSymbol = 'OANDA:XAU_USD'; // Gold per ounce
+        const silverSymbol = 'OANDA:XAG_USD'; // Silver per ounce
+
+        const [goldRes, silverRes] = await Promise.all([
+            axios.get(`https://finnhub.io/api/v1/quote?symbol=${goldSymbol}&token=${FINNHUB_KEY}`),
+            axios.get(`https://finnhub.io/api/v1/quote?symbol=${silverSymbol}&token=${FINNHUB_KEY}`)
+        ]);
+
+        // Convert from ounce to gram (1 troy ounce = 31.1035 grams)
+        const GRAMS_PER_OUNCE = 31.1035;
+        const goldPricePerGram = goldRes.data.c / GRAMS_PER_OUNCE;
+        const silverPricePerGram = silverRes.data.c / GRAMS_PER_OUNCE;
+
+        const data = [
+            {
+                name: 'Gold',
+                symbol: 'XAU',
+                pricePerGram: goldPricePerGram,
+                pricePerOunce: goldRes.data.c,
+                change: goldRes.data.dp || 0
+            },
+            {
+                name: 'Silver',
+                symbol: 'XAG',
+                pricePerGram: silverPricePerGram,
+                pricePerOunce: silverRes.data.c,
+                change: silverRes.data.dp || 0
+            }
+        ];
+
+        cache.set(cacheKey, { data: data, timestamp: Date.now() });
+        res.json(data);
+    } catch (e) {
+        console.error('Precious metals error:', e.response ? e.response.data : e.message);
+        res.status(500).json({ error: 'Failed to fetch precious metals data', details: e.message });
     }
 });
 
