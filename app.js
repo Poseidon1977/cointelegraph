@@ -217,6 +217,12 @@ function renderGrid(container, items) {
         const card = document.createElement('div');
         const isUp = item.change >= 0;
         card.className = `crypto-card ${isUp ? 'up' : 'down'}`;
+
+        // Generate random sparkline data (7 points) - simulating 7-day trend
+        // In production, this should come from API
+        const sparklineData = generateSparklineData(isUp);
+        const sparklineSVG = createSparklineSVG(sparklineData, isUp);
+
         card.innerHTML = `
             <div class="card-header">
                 <span class="coin-name">${item.name}</span>
@@ -224,11 +230,55 @@ function renderGrid(container, items) {
             </div>
             <div class="price-row">
                 <div class="coin-price">${item.price}</div>
-                <div class="coin-symbol" style="font-size: 0.7rem; color: #888">${item.symbol}</div>
+                <div class="coin-symbol" style="font-size: 0.7rem; color: #888">${item.symbol}${item.subtitle ? ' •  ' + item.subtitle : ''}</div>
+            </div>
+            <div class="sparkline-container">
+                ${sparklineSVG}
             </div>
         `;
         container.appendChild(card);
     });
+}
+
+// Generate simulated sparkline data (7 points)
+function generateSparklineData(isUpTrend) {
+    const points = [];
+    let value = 50;
+    for (let i = 0; i < 7; i++) {
+        const change = (Math.random() - 0.5) * 10;
+        value += isUpTrend ? Math.abs(change) * 0.6 : -Math.abs(change) * 0.6;
+        value = Math.max(20, Math.min(80, value));
+        points.push(value);
+    }
+    return points;
+}
+
+// Create SVG sparkline
+function createSparklineSVG(data, isUp) {
+    const width = 100;
+    const height = 30;
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const range = max - min || 1;
+
+    const points = data.map((value, index) => {
+        const x = (index / (data.length - 1)) * width;
+        const y = height - ((value - min) / range) * height;
+        return `${x},${y}`;
+    }).join(' ');
+
+    const color = isUp ? '#10b981' : '#ef4444';
+
+    return `
+        <svg width="${width}" height="${height}" style="display: block;">
+            <polyline
+                fill="none"
+                stroke="${color}"
+                stroke-width="1.5"
+                points="${points}"
+            />
+        </svg>
+    `;
 }
 
 function updateConverter(data) {
