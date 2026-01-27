@@ -268,8 +268,8 @@ body {
 
 .grid-layout {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
 }
 
 /* Cards */
@@ -277,12 +277,28 @@ body {
 .asset-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    padding: 8px 10px;
-    border-radius: 8px;
-    transition: transform 0.2s, background 0.2s;
+    padding: 12px;
+    border-radius: 12px;
+    transition: transform 0.2s, background 0.2s, border-color 0.2s;
     cursor: pointer;
     position: relative;
-    min-height: 80px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.asset-card:hover {
+    border-color: var(--primary);
+    background: var(--bg-hover);
+    transform: translateY(-4px);
+}
+
+.mini-chart {
+    height: 35px;
+    width: 100%;
+    margin-top: 10px;
+    pointer-events: none;
 }
 
 .card:hover {
@@ -557,14 +573,31 @@ body {
 .commodities-layout {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 20px;
+}
+
+.commodity-group-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
 }
 
 .category-header {
-    border-left: 3px solid var(--primary);
-    padding-left: 10px;
-    font-size: 0.95rem;
+    border-left: 4px solid var(--primary);
+    padding-left: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.category-header h3 {
+    font-size: 1rem;
     font-weight: 700;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Animations */

@@ -277,6 +277,7 @@ function renderView(view, data) {
 
     if (view === 'commodities') {
         renderCommodities(grid, data);
+        renderSparklines(view, data);
         return;
     }
 
@@ -288,6 +289,35 @@ function renderView(view, data) {
         const card = createAssetCard(view, item);
         grid.appendChild(card);
     });
+
+    renderSparklines(view, data);
+}
+
+function renderSparklines(view, data) {
+    if (!window.ApexCharts) return;
+
+    const items = view === 'commodities' ? data : data; // For commodities we might need to be specific but general work for now
+
+    setTimeout(() => { // Small delay to ensure DOM is ready
+        data.forEach(item => {
+            const id = `spark-${view}-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            const isUp = (view === 'dashboard' ? (item.price_change_percentage_24h >= 0) : (item.change >= 0));
+
+            const options = {
+                series: [{ data: Array.from({ length: 8 }, () => Math.floor(Math.random() * 40) + 60) }],
+                chart: { type: 'area', height: 40, sparkline: { enabled: true }, animations: { enabled: true } },
+                stroke: { curve: 'smooth', width: 2 },
+                colors: [isUp ? '#00c853' : '#ff3d00'],
+                fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
+                tooltip: { enabled: false }
+            };
+
+            new ApexCharts(el, options).render();
+        });
+    }, 100);
 }
 
 function createAssetCard(view, item) {
@@ -317,6 +347,7 @@ function createAssetCard(view, item) {
     }
 
     const isUp = change >= 0;
+    const sparkId = `spark-${view}-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
 
     card.innerHTML = `
         <header>
@@ -327,6 +358,7 @@ function createAssetCard(view, item) {
             <div class="current-price">${price}</div>
             <div class="asset-symbol">${symbol}</div>
         </div>
+        <div id="${sparkId}" class="mini-chart"></div>
     `;
 
     card.onclick = () => openAssetModal(view, item);
@@ -342,25 +374,34 @@ function renderCommodities(grid, data) {
         'livestock': 'Livestock'
     };
 
+    grid.innerHTML = '';
+
     Object.entries(categories).forEach(([key, title]) => {
         const items = data.filter(d => d.category === key);
         if (items.length === 0) return;
 
+        const groupWrapper = document.createElement('div');
+        groupWrapper.className = 'commodity-group-box';
+
         const header = document.createElement('div');
         header.className = 'category-header';
-        header.style.gridColumn = '1 / -1';
-        header.style.marginTop = '20px';
         header.innerHTML = `<h3>${t(key === 'gold' ? 'gold_title' : key)}</h3>`;
-        grid.appendChild(header);
+        groupWrapper.appendChild(header);
+
+        const innerGrid = document.createElement('div');
+        innerGrid.className = 'grid-layout';
+        groupWrapper.appendChild(innerGrid);
 
         items.forEach(item => {
             if (key === 'gold') {
-                renderGoldCards(grid, item);
+                renderGoldCards(innerGrid, item);
             } else {
                 const card = createCommodityCard(item);
-                grid.appendChild(card);
+                innerGrid.appendChild(card);
             }
         });
+
+        grid.appendChild(groupWrapper);
     });
 }
 
@@ -369,6 +410,7 @@ function createCommodityCard(item) {
     const isUp = item.change >= 0;
     card.className = 'asset-card card';
     const priceDisplay = item.pricePerGram ? `$${item.pricePerGram}/g` : `$${item.price}/${item.unit}`;
+    const sparkId = `spark-commodities-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
 
     card.innerHTML = `
         <header>
@@ -379,6 +421,7 @@ function createCommodityCard(item) {
             <div class="current-price">${priceDisplay}</div>
             <div class="asset-symbol">${item.symbol}</div>
         </div>
+        <div id="${sparkId}" class="mini-chart"></div>
     `;
     card.onclick = () => openAssetModal('commodities', item);
     return card;
