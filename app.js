@@ -447,11 +447,11 @@ function renderGoldCards(grid, item) {
     cardTRY.className = 'asset-card card';
     cardTRY.innerHTML = `
         <header>
-            <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/tr.png" style="width:20px"> ALTIN/TRY</div>
+            <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/tr.png" style="width:20px"> ${t('altin_try')}</div>
         </header>
         <div class="price-box">
             <div class="current-price" style="color:var(--warning)">₺${item.priceInTRY ? (item.priceInTRY / 31.1035).toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : '...'}</div>
-            <div class="asset-symbol">GRAM ALTIN (TRY)</div>
+            <div class="asset-symbol">${t('gram_altin_try')}</div>
         </div>
         <div id="spark-commodities-gold-try" class="mini-chart"></div>
     `;
@@ -463,11 +463,11 @@ function renderGoldCards(grid, item) {
     cardUAH.className = 'asset-card card';
     cardUAH.innerHTML = `
         <header>
-            <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/ua.png" style="width:20px"> GOLD/UAH</div>
+            <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/ua.png" style="width:20px"> ${t('altin_uah')}</div>
         </header>
         <div class="price-box">
             <div class="current-price" style="color:var(--accent)">₴${item.priceInUAH ? (item.priceInUAH / 31.1035).toLocaleString('uk-UA', { maximumFractionDigits: 0 }) : '...'}</div>
-            <div class="asset-symbol">GRAM GOLD (UAH)</div>
+            <div class="asset-symbol">${t('gram_altin_uah')}</div>
         </div>
         <div id="spark-commodities-gold-uah" class="mini-chart"></div>
     `;

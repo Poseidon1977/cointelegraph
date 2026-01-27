@@ -31,6 +31,10 @@ const translations = {
         'agri': 'Tarım',
         'livestock': 'Hayvancılık',
         'gram_altin': 'GRAM ALTIN',
+        'altin_try': 'ALTIN/TRY',
+        'altin_uah': 'ALTIN/UAH',
+        'gram_altin_try': 'GRAM ALTIN (TRY)',
+        'gram_altin_uah': 'GRAM ALTIN (UAH)',
         'viewing': 'görüntüleniyor',
         'search_placeholder': 'Piyasalarda ara...',
         // Stocks
@@ -69,6 +73,10 @@ const translations = {
         'agri': 'Agriculture',
         'livestock': 'Livestock',
         'gram_altin': 'GRAM GOLD',
+        'altin_try': 'GOLD/TRY',
+        'altin_uah': 'GOLD/UAH',
+        'gram_altin_try': 'GRAM GOLD (TRY)',
+        'gram_altin_uah': 'GRAM GOLD (UAH)',
         'viewing': 'viewing',
         'search_placeholder': 'Search markets...',
         // Stocks
@@ -107,6 +115,10 @@ const translations = {
         'agri': 'Сільське господарство',
         'livestock': 'Тваринництво',
         'gram_altin': 'ГРАМ ЗОЛОТА',
+        'altin_try': 'ЗОЛОТО/TRY',
+        'altin_uah': 'ЗОЛОТО/UAH',
+        'gram_altin_try': 'ГРАМ ЗОЛОТА (TRY)',
+        'gram_altin_uah': 'ГРАМ ЗОЛОТА (UAH)',
         'viewing': 'перегляд',
         'search_placeholder': 'Пошук ринків...',
         // Stocks
@@ -145,6 +157,10 @@ const translations = {
         'agri': 'Landwirtschaft',
         'livestock': 'Viehbestand',
         'gram_altin': 'GRAMM GOLD',
+        'altin_try': 'GOLD/TRY',
+        'altin_uah': 'GOLD/UAH',
+        'gram_altin_try': 'GRAMM GOLD (TRY)',
+        'gram_altin_uah': 'GRAMM GOLD (UAH)',
         'viewing': 'wird angezeigt',
         'search_placeholder': 'Märkte suchen...',
         // Stocks
@@ -203,6 +219,13 @@ function updateUILanguage() {
 
         const searchInput = document.getElementById('global-search');
         if (searchInput) searchInput.placeholder = t('search_placeholder');
+
+        // Refresh Current View to apply localized names/labels
+        if (typeof State !== 'undefined' && State.data[State.currentView]) {
+            if (typeof renderView === 'function') {
+                renderView(State.currentView, State.data[State.currentView]);
+            }
+        }
 
     } catch (e) {
         console.warn('UI Language Sync non-fatal error:', e);
