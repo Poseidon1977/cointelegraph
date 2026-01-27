@@ -316,6 +316,17 @@ function renderSparklines(view, data) {
             };
 
             new ApexCharts(el, options).render();
+
+            // Extra logic for specialized gold cards
+            if (view === 'commodities' && item.category === 'gold') {
+                ['try', 'uah'].forEach(suffix => {
+                    const extraId = `spark-commodities-gold-${suffix}`;
+                    const extraEl = document.getElementById(extraId);
+                    if (extraEl) {
+                        new ApexCharts(extraEl, options).render();
+                    }
+                });
+            }
         });
     }, 100);
 }
@@ -442,6 +453,7 @@ function renderGoldCards(grid, item) {
             <div class="current-price" style="color:var(--warning)">₺${item.priceInTRY ? (item.priceInTRY / 31.1035).toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : '...'}</div>
             <div class="asset-symbol">GRAM ALTIN (TRY)</div>
         </div>
+        <div id="spark-commodities-gold-try" class="mini-chart"></div>
     `;
     cardTRY.onclick = () => openAssetModal('commodities', item);
     grid.appendChild(cardTRY);
@@ -457,6 +469,7 @@ function renderGoldCards(grid, item) {
             <div class="current-price" style="color:var(--accent)">₴${item.priceInUAH ? (item.priceInUAH / 31.1035).toLocaleString('uk-UA', { maximumFractionDigits: 0 }) : '...'}</div>
             <div class="asset-symbol">GRAM GOLD (UAH)</div>
         </div>
+        <div id="spark-commodities-gold-uah" class="mini-chart"></div>
     `;
     cardUAH.onclick = () => openAssetModal('commodities', item);
     grid.appendChild(cardUAH);
@@ -622,15 +635,7 @@ function showToast(msg) {
 
 // Utility mapper for Stock names (frontend fallback)
 function getStockName(symbol) {
-    const names = {
-        'AAPL': 'Apple', 'TSLA': 'Tesla', 'NVDA': 'Nvidia', 'MSFT': 'Microsoft', 'AMZN': 'Amazon',
-        'GOOGL': 'Google', 'META': 'Meta', 'NFLX': 'Netflix', 'AMD': 'AMD', 'INTC': 'Intel',
-        'KO': 'Coca-Cola', 'MCD': 'McDonald\'s', 'DIS': 'Disney', 'V': 'Visa', 'JPM': 'JPMorgan',
-        'WMT': 'Walmart', 'PG': 'Procter & Gamble', 'NKE': 'Nike', 'ORCL': 'Oracle', 'CRM': 'Salesforce',
-        'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
-        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments'
-    };
-    return names[symbol] || symbol;
+    return t(symbol); // Now using the translation system for all stocks
 }
 
 // --- Boot Trigger ---
