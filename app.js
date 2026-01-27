@@ -48,7 +48,6 @@ const config = {
 let currentView = 'dashboard';
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('System initializing...');
     setupNavigation();
     initClock();
     startDataCycles();
@@ -211,54 +210,52 @@ async function fetchCommodities() {
             grid.appendChild(categoryHeader);
 
             if (category === 'gold') {
-                const heroContainer = document.createElement('div');
-                heroContainer.className = 'gold-hero-container';
-                grid.appendChild(heroContainer);
-
                 items.forEach(item => {
                     const icon = getCommodityIcon(item.name);
 
                     // 1. USD Card (Global)
                     const cardUSD = document.createElement('div');
-                    cardUSD.className = 'gold-hero-card';
+                    cardUSD.className = 'crypto-card up';
                     cardUSD.innerHTML = `
-                        <div class="gold-icon-large">${icon}</div>
-                        <div class="gold-label">
-                            <span class="emoji-colored">🇺🇸</span> GOLD / USD
+                        <div class="card-header">
+                            <span class="coin-name" style="font-size: 0.85rem">${icon} <img src="https://flagcdn.com/w40/us.png" class="flag-icon" alt="USD"> GOLD/USD</span>
                         </div>
-                        <div class="gold-value">$${item.price.toLocaleString()}</div>
-                        <div class="gold-sub-value">GRAM: $${item.pricePerGram?.toFixed(2)}</div>
-                        <div style="font-size: 0.8rem; color: #666; margin-top: 10px;">GLOBAL MARKET</div>
+                        <div class="price-row">
+                            <div class="coin-price" style="font-size: 0.95rem">$${item.price.toLocaleString()}</div>
+                        </div>
+                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">Gram: $${item.pricePerGram?.toFixed(2)}</div>
                     `;
-                    heroContainer.appendChild(cardUSD);
+                    grid.appendChild(cardUSD);
 
                     // 2. TRY Card (Turkey)
                     const cardTRY = document.createElement('div');
-                    cardTRY.className = 'gold-hero-card';
-                    cardTRY.style.borderColor = 'rgba(255, 61, 0, 0.3)'; // Reddish border for differentiation
+                    cardTRY.className = 'crypto-card up';
+                    cardTRY.style.borderColor = 'rgba(255, 61, 0, 0.3)';
                     cardTRY.innerHTML = `
-                        <div class="gold-icon-large" style="color: #ff3d00">${icon}</div>
-                        <div class="gold-label">
-                            <span class="emoji-colored">🇹🇷</span> GRAM ALTIN
+                        <div class="card-header">
+                            <span class="coin-name" style="font-size: 0.85rem">${icon} <img src="https://flagcdn.com/w40/tr.png" class="flag-icon" alt="TRY"> ALTIN/TRY</span>
                         </div>
-                        <div class="gold-value" style="color: #ff9e80">₺${item.pricePerGramTRY?.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</div>
-                        <div class="gold-sub-value">Fiyat (TRY)</div>
+                        <div class="price-row">
+                            <div class="coin-price" style="font-size: 0.95rem; color: #ff9e80">₺${item.pricePerGramTRY?.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</div>
+                        </div>
+                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">Gram Altın</div>
                     `;
-                    heroContainer.appendChild(cardTRY);
+                    grid.appendChild(cardTRY);
 
                     // 3. UAH Card (Ukraine)
                     const cardUAH = document.createElement('div');
-                    cardUAH.className = 'gold-hero-card';
-                    cardUAH.style.borderColor = 'rgba(0, 229, 255, 0.3)'; // Blue border for differentiation
+                    cardUAH.className = 'crypto-card up';
+                    cardUAH.style.borderColor = 'rgba(0, 229, 255, 0.3)';
                     cardUAH.innerHTML = `
-                        <div class="gold-icon-large" style="color: #00e5ff">${icon}</div>
-                        <div class="gold-label">
-                            <span class="emoji-colored">🇺🇦</span> UAH GOLD
+                        <div class="card-header">
+                            <span class="coin-name" style="font-size: 0.85rem">${icon} <img src="https://flagcdn.com/w40/ua.png" class="flag-icon" alt="UAH"> GOLD/UAH</span>
                         </div>
-                        <div class="gold-value" style="color: #80d8ff">₴${item.pricePerGramUAH?.toLocaleString('uk-UA', { maximumFractionDigits: 0 })}</div>
-                        <div class="gold-sub-value">Price (UAH)</div>
+                        <div class="price-row">
+                            <div class="coin-price" style="font-size: 0.95rem; color: #80d8ff">₴${item.pricePerGramUAH?.toLocaleString('uk-UA', { maximumFractionDigits: 0 })}</div>
+                        </div>
+                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">Gram Gold</div>
                     `;
-                    heroContainer.appendChild(cardUAH);
+                    grid.appendChild(cardUAH);
                 });
                 return;
             }
@@ -275,7 +272,7 @@ async function fetchCommodities() {
 
                 card.innerHTML = `
                     <div class="card-header">
-                        <span class="coin-name" style="font-size: 0.85rem"><span class="emoji-colored">${icon}</span> ${item.name}</span>
+                        <span class="coin-name" style="font-size: 0.85rem">${icon} ${item.name}</span>
                         <span class="change-badge ${isUp ? 'change-up' : 'change-down'}">${isUp ? '▲' : '▼'} ${Math.abs(item.change || 0).toFixed(2)}%</span>
                     </div>
                     <div class="price-row">
@@ -285,6 +282,7 @@ async function fetchCommodities() {
                 `;
                 grid.appendChild(card);
             });
+        });
     } catch (e) {
         console.error('Commodities error', e);
         grid.innerHTML = '<div class="loading" style="color: #ff3d00">Failed to load commodities</div>';
