@@ -125,8 +125,17 @@ function setupSearch() {
         // 3. Search Commodities
         if (State.data['commodities']) {
             State.data['commodities'].forEach(item => {
-                if (item.name.toLowerCase().includes(query) || (item.symbol && item.symbol.toLowerCase().includes(query))) {
-                    results.push({ type: 'commodities', data: item, name: item.name, symbol: item.symbol || '', icon: getCommodityIcon(item.name) });
+                const translatedName = t(item.name);
+                if (item.name.toLowerCase().includes(query) ||
+                    translatedName.toLowerCase().includes(query) ||
+                    (item.symbol && item.symbol.toLowerCase().includes(query))) {
+                    results.push({
+                        type: 'commodities',
+                        data: item,
+                        name: translatedName,
+                        symbol: item.symbol || '',
+                        icon: getCommodityIcon(item.name)
+                    });
                 }
             });
         }
