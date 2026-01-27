@@ -25,7 +25,8 @@ const translations = {
         'agri': 'Tarım',
         'livestock': 'Hayvancılık',
         'gram_altin': 'GRAM ALTIN',
-        'global_market': 'KÜRESEL PİYASA'
+        'global_market': 'KÜRESEL PİYASA',
+        'viewing': 'görüntüleniyor'
     },
     en: {
         'dashboard': 'Market Overview',
@@ -53,7 +54,8 @@ const translations = {
         'agri': 'Agriculture',
         'livestock': 'Livestock',
         'gram_altin': 'GRAM GOLD',
-        'global_market': 'GLOBAL MARKET'
+        'global_market': 'GLOBAL MARKET',
+        'viewing': 'viewing'
     },
     ua: {
         'dashboard': 'Огляд ринку',
@@ -81,7 +83,8 @@ const translations = {
         'agri': 'Сільське господарство',
         'livestock': 'Тваринництво',
         'gram_altin': 'ГРАМ ЗОЛОТА',
-        'global_market': 'ГЛОБАЛЬНИЙ РИНОК'
+        'global_market': 'ГЛОБАЛЬНИЙ РИНОК',
+        'viewing': 'перегляд'
     },
     de: {
         'dashboard': 'Marktübersicht',
@@ -109,7 +112,8 @@ const translations = {
         'agri': 'Landwirtschaft',
         'livestock': 'Viehbestand',
         'gram_altin': 'GRAMM GOLD',
-        'global_market': 'GLOBALER MARKT'
+        'global_market': 'GLOBALER MARKT',
+        'viewing': 'wird angezeigt'
     }
 };
 

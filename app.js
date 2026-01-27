@@ -51,17 +51,58 @@ const config = {
         { id: 'floki', name: 'Floki Inu', symbol: 'FLOKI' }
     ],
     stocks: [
-        'AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC',
-        'BABA', 'JPM', 'V', 'WMT', 'DIS', 'COIN', 'SQ', 'PYPL', 'SHOP', 'UBER',
-        'ROKU', 'SNAP', 'SPOT', 'ZM', 'ADBE', 'CRM', 'AMD', 'ORCL', 'CSCO', 'AVGO',
-        'QCOM', 'TXN', 'INTU', 'AMAT', 'MU', 'LRCX', 'ADI', 'PANW', 'SNPS', 'CDNS',
-        'ABNB', 'DASH', 'PINS', 'PLTR'
+        { name: 'Apple', symbol: 'AAPL' },
+        { name: 'Tesla', symbol: 'TSLA' },
+        { name: 'Nvidia', symbol: 'NVDA' },
+        { name: 'Microsoft', symbol: 'MSFT' },
+        { name: 'Amazon', symbol: 'AMZN' },
+        { name: 'Google', symbol: 'GOOGL' },
+        { name: 'Meta', symbol: 'META' },
+        { name: 'Netflix', symbol: 'NFLX' },
+        { name: 'AMD', symbol: 'AMD' },
+        { name: 'Intel', symbol: 'INTC' },
+        { name: 'Coca-Cola', symbol: 'KO' },
+        { name: 'PepsiCo', symbol: 'PEP' },
+        { name: 'McDonalds', symbol: 'MCD' },
+        { name: 'Starbucks', symbol: 'SBUX' },
+        { name: 'Disney', symbol: 'DIS' },
+        { name: 'Nike', symbol: 'NKE' },
+        { name: 'Visa', symbol: 'V' },
+        { name: 'Mastercard', symbol: 'MA' },
+        { name: 'Walmart', symbol: 'WMT' },
+        { name: 'JP Morgan', symbol: 'JPM' },
+        { name: 'Goldman Sachs', symbol: 'GS' },
+        { name: 'Berkshire Hathaway', symbol: 'BRK.B' },
+        { name: 'Coinbase', symbol: 'COIN' },
+        { name: 'Palantir', symbol: 'PLTR' },
+        { name: 'Airbnb', symbol: 'ABNB' },
+        { name: 'Uber', symbol: 'UBER' },
+        { name: 'Spotify', symbol: 'SPOT' },
+        { name: 'Shopify', symbol: 'SHOP' },
+        { name: 'Alibaba', symbol: 'BABA' },
+        { name: 'MercadoLibre', symbol: 'MELI' }
     ],
     commodities: [
-        'GOLD', 'SILVER', 'PLATINUM', 'PALLADIUM', 'COPPER',
-        'CRUDE OIL (WTI)', 'BRENT OIL', 'NATURAL GAS', 'HEATING OIL', 'GASOLINE',
-        'WHEAT', 'CORN', 'SOYBEANS', 'COFFEE', 'SUGAR', 'COTTON', 'COCOA', 'RICE',
-        'LIVE CATTLE', 'LEAN HOGS'
+        { name: 'Gold', symbol: 'GOLD' },
+        { name: 'Silver', symbol: 'SILVER' },
+        { name: 'Platinum', symbol: 'PLATINUM' },
+        { name: 'Palladium', symbol: 'PALLADIUM' },
+        { name: 'Copper', symbol: 'COPPER' },
+        { name: 'Crude Oil (WTI)', symbol: 'WTI' },
+        { name: 'Brent Oil', symbol: 'BRENT' },
+        { name: 'Natural Gas', symbol: 'NATGAS' },
+        { name: 'Heating Oil', symbol: 'HO' },
+        { name: 'Gasoline', symbol: 'GASO' },
+        { name: 'Wheat', symbol: 'WHEAT' },
+        { name: 'Corn', symbol: 'CORN' },
+        { name: 'Soybeans', symbol: 'SOY' },
+        { name: 'Coffee', symbol: 'COFFEE' },
+        { name: 'Sugar', symbol: 'SUGAR' },
+        { name: 'Cotton', symbol: 'COTTON' },
+        { name: 'Cocoa', symbol: 'COCOA' },
+        { name: 'Rice', symbol: 'RICE' },
+        { name: 'Live Cattle', symbol: 'CATTLE' },
+        { name: 'Lean Hogs', symbol: 'HOGS' }
     ],
 };
 
@@ -231,7 +272,8 @@ async function fetchStocks() {
     if (!grid) return;
 
     try {
-        const res = await fetch(`/api/stocks?symbols=${config.stocks.join(',')}`);
+        const symbols = config.stocks.map(s => s.symbol).join(',');
+        const res = await fetch(`/api/stocks?symbols=${symbols}`);
         const data = await res.json();
 
         localStorage.setItem('cache_stocks', JSON.stringify(data));
@@ -627,27 +669,27 @@ function setupSearch() {
         // Crypto
         config.crypto.forEach(c => {
             if (c.name.toLowerCase().includes(query) || c.symbol.toLowerCase().includes(query)) {
-                matches.push({ type: 'crypto', ...c });
+                matches.push({ type: 'crypto', name: c.name, symbol: c.symbol, id: c.id });
             }
         });
 
         // Stocks
         config.stocks.forEach(s => {
-            if (s.toLowerCase().includes(query)) {
-                matches.push({ type: 'stock', name: s, symbol: s });
+            if (s.name.toLowerCase().includes(query) || s.symbol.toLowerCase().includes(query)) {
+                matches.push({ type: 'stock', name: s.name, symbol: s.symbol });
             }
         });
 
         // Commodities
         config.commodities.forEach(c => {
-            if (c.toLowerCase().includes(query)) {
-                matches.push({ type: 'commodity', name: c, symbol: c });
+            if (c.name.toLowerCase().includes(query) || c.symbol.toLowerCase().includes(query)) {
+                matches.push({ type: 'commodity', name: c.name, symbol: c.symbol });
             }
         });
 
         if (matches.length > 0) {
             results.innerHTML = matches.slice(0, 10).map(m => `
-                <div class="search-item" onclick="handleSearchClick('${m.type}', '${m.id || m.symbol}')">
+                <div class="search-item" onclick="handleSearchClick('${m.type}', '${m.id || m.symbol}', '${m.name.replace(/'/g, "\\'")}')">
                     <span class="search-type">${m.type.toUpperCase()}</span>
                     <span class="search-name">${m.name}</span>
                     <span class="search-symbol">${m.symbol}</span>
@@ -668,19 +710,32 @@ function setupSearch() {
     });
 }
 
-function handleSearchClick(type, id) {
+function handleSearchClick(type, id, name) {
     document.getElementById('search-results').classList.add('hidden');
     document.getElementById('global-search').value = '';
 
-    // If it's crypto and we are on dashboard, scroll to it or just show info
-    // For now, let's just toast
-    showToast(`Viewing ${id}...`);
+    showToast(`${name || id} ${t('viewing')}...`);
 
     // Navigate to the correct view
     const navMap = { 'crypto': 'dashboard', 'stock': 'stocks', 'commodity': 'commodities' };
     const targetNav = navMap[type];
     if (targetNav) {
-        document.querySelector(`.nav-item[data-target="${targetNav}"]`)?.click();
+        const navItem = document.querySelector(`.nav-item[data-target="${targetNav}"]`);
+        if (navItem) {
+            navItem.click();
+            // Optional: If searching for specific item, highlight it after a short delay
+            setTimeout(() => {
+                const elements = document.querySelectorAll('.coin-name, .stock-name');
+                for (let el of elements) {
+                    if (el.textContent.includes(id) || el.textContent.includes(name)) {
+                        el.closest('.crypto-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.closest('.crypto-card')?.style.border = '2px solid #00e5ff';
+                        setTimeout(() => el.closest('.crypto-card').style.border = '', 3000);
+                        break;
+                    }
+                }
+            }, 500);
+        }
     }
 }
 
