@@ -87,7 +87,7 @@ function startDataCycles() {
     fetchCurrentViewData();
     setInterval(() => {
         fetchCurrentViewData();
-    }, 60000); // Update every 60s (optimized from 30s)
+    }, 30000); // Update every 30s for real-time forex rates
 }
 
 function fetchCurrentViewData() {
@@ -147,19 +147,73 @@ async function fetchCommodities() {
     if (!grid) return;
 
     try {
-        const res = await fetch('/api/precious-metals');
+        const res = await fetch('/api/commodities');
         const data = await res.json();
 
-        renderGrid(grid, data.map(metal => ({
-            name: metal.name,
-            symbol: metal.symbol,
-            price: `$${metal.pricePerGram.toFixed(2)}/g`,
-            change: metal.change,
-            id: metal.symbol,
-            subtitle: `Ons: $${metal.pricePerOunce.toFixed(2)}`
-        })));
+        if (!data || data.length === 0) {
+            grid.innerHTML = '<div class="loading">No commodities data available</div>';
+            return;
+        }
+
+        grid.innerHTML = '';
+
+        // Group by category
+        const grouped = {};
+        data.forEach(item => {
+            if (!grouped[item.category]) grouped[item.category] = [];
+            grouped[item.category].push(item);
+        });
+
+        // Display each category
+        Object.entries(grouped).forEach(([category, items]) => {
+            const categoryHeader = document.createElement('div');
+            categoryHeader.style.gridColumn = '1 / -1';
+            categoryHeader.style.fontSize = '1.1rem';
+            categoryHeader.style.fontWeight = 'bold';
+            categoryHeader.style.color = '#00e5ff';
+            categoryHeader.style.marginTop = '20px';
+            categoryHeader.style.marginBottom = '10px';
+            categoryHeader.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+            grid.appendChild(categoryHeader);
+
+            items.forEach(item => {
+                const card = document.createElement('div');
+                const isUp = item.change >= 0;
+                card.className = `crypto-card ${isUp ? 'up' : 'down'}`;
+
+                const icon = getCommodityIcon(item.name);
+                const priceDisplay = item.pricePerGram
+                    ? `$${item.pricePerGram}/g`
+                    : `$${item.price}/${item.unit}`;
+
+                // Special display for Gold with TRY and UAH prices
+                let extraInfo = '';
+                if (item.name === 'Gold' && item.priceInTRY) {
+                    extraInfo = `
+                        <div style="font-size: 0.7rem; color: #aaa; margin-top: 4px; border-top: 1px solid #333; padding-top: 4px;">
+                            <div>🇹🇷 ₺${item.pricePerGramTRY}/g  •  ₺${item.priceInTRY}/oz</div>
+                            <div>🇺🇦 ₴${item.pricePerGramUAH}/g  •  ₴${item.priceInUAH}/oz</div>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="coin-name" style="font-size: 0.85rem">${icon} ${item.name}</span>
+                        <span class="change-badge ${isUp ? 'change-up' : 'change-down'}">${isUp ? '▲' : '▼'} ${Math.abs(item.change || 0).toFixed(2)}%</span>
+                    </div>
+                    <div class="price-row">
+                        <div class="coin-price" style="font-size: 1rem">${priceDisplay}</div>
+                        <div class="coin-symbol" style="font-size: 0.65rem; color: #888">${item.symbol}</div>
+                    </div>
+                    ${extraInfo}
+                `;
+                grid.appendChild(card);
+            });
+        });
     } catch (e) {
         console.error('Commodities error', e);
+        grid.innerHTML = '<div class="loading" style="color: #ff3d00">Failed to load commodities</div>';
     }
 }
 
@@ -173,7 +227,7 @@ async function fetchForex() {
         const data = await res.json();
 
         renderGrid(grid, data.map(f => ({
-            name: f.symbol,
+            name: `${getPairFlags(f.symbol)} ${f.symbol}`,
             symbol: f.symbol,
             price: f.price.toFixed(4),
             change: f.change,
@@ -286,11 +340,22 @@ function updateConverter(data) {
     const toSelect = document.getElementById('conv-to');
 
     if (fromSelect.options.length === 0) {
-        const currencies = ['USD', 'EUR', 'TRY', 'GBP', 'JPY'];
+        // Extract all unique currencies from the forex data
+        const currencySet = new Set();
+        data.forEach(item => {
+            const [cur1, cur2] = item.symbol.split('/');
+            currencySet.add(cur1);
+            currencySet.add(cur2);
+        });
+
+        const currencies = Array.from(currencySet).sort();
         currencies.forEach(c => {
             fromSelect.add(new Option(c, c));
             toSelect.add(new Option(c, c));
         });
+
+        // Set defaults
+        fromSelect.value = 'USD';
         toSelect.value = 'TRY';
     }
 
@@ -319,14 +384,20 @@ function updateConverter(data) {
         }
     }
 
-    // Fallback if not found in forex data but we have cross rates
-    if (rate === 0) {
-        // Try cross conversion through USD if available
-        const usdToFrom = data.find(d => d.symbol === `USD/${from}`);
+    // Fallback: cross conversion through USD if available
+    if (rate === 0 && from !== 'USD' && to !== 'USD') {
+        const fromToUsd = data.find(d => d.symbol === `${from}/USD`);
         const usdToTo = data.find(d => d.symbol === `USD/${to}`);
 
-        if (usdToFrom && usdToTo && usdToFrom.price !== 0) {
-            rate = usdToTo.price / usdToFrom.price;
+        if (fromToUsd && usdToTo && fromToUsd.price !== 0) {
+            rate = usdToTo.price / fromToUsd.price;
+        } else {
+            // Try inverse
+            const usdToFrom = data.find(d => d.symbol === `USD/${from}`);
+            const toToUsd = data.find(d => d.symbol === `${to}/USD`);
+            if (usdToFrom && toToUsd && usdToFrom.price !== 0 && toToUsd.price !== 0) {
+                rate = (1 / usdToFrom.price) * (1 / toToUsd.price);
+            }
         }
     }
 

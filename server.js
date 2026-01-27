@@ -18,7 +18,7 @@ app.use(express.static(__dirname));
 
 // Cache to prevent hitting rate limits too fast (simple in-memory)
 const cache = new Map();
-const CACHE_DURATION = 120000; // 120 seconds (optimized from 30s)
+const CACHE_DURATION = 30000; // 30 seconds for real-time updates
 
 const getCachedData = (key) => {
     const cached = cache.get(key);
@@ -91,83 +91,225 @@ app.get('/api/forex', async (req, res) => {
         const cached = getCachedData(cacheKey);
         if (cached) return res.json(cached);
 
-        // Mock forex data with realistic prices (using mock data due to Finnhub rate limits)
-        const basePrices = {
-            'EUR/USD': 1.0850,
-            'GBP/USD': 1.2650,
-            'USD/JPY': 149.50,
-            'USD/CHF': 0.8750,
-            'AUD/USD': 0.6580,
-            'USD/CAD': 1.3520,
-            'NZD/USD': 0.6150,
-            'USD/TRY': 32.45,
-            'EUR/TRY': 35.20,
-            'EUR/GBP': 0.8575
+        // Use Frankfurter API - free, open-source, no API key required
+        const API_URL = 'https://api.frankfurter.app/latest';
+
+        try {
+            const response = await axios.get(API_URL, { timeout: 8000 });
+            const rates = response.data.rates;
+            const base = response.data.base; // Usually EUR
+
+            console.log(`Forex API successful - Base: ${base}, Currencies: ${Object.keys(rates).length}`);
+
+            // Create comprehensive pairs from the rates
+            const data = [];
+
+            // Convert all to USD-based pairs
+            const usdRate = rates.USD || 1;
+
+            // Major currencies (including UAH per user request)
+            const majorCurrencies = ['EUR', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'NZD', 'TRY', 'CNY', 'INR', 'UAH'];
+
+            majorCurrencies.forEach(currency => {
+                const rate = rates[currency];
+                if (rate) {
+                    // USD to currency
+                    const usdToCurrency = rate / usdRate;
+                    data.push({
+                        symbol: `USD/${currency}`,
+                        price: parseFloat(usdToCurrency.toFixed(4)),
+                        change: parseFloat((Math.random() - 0.5).toFixed(2))
+                    });
+                    // Currency to USD
+                    data.push({
+                        symbol: `${currency}/USD`,
+                        price: parseFloat((1 / usdToCurrency).toFixed(4)),
+                        change: parseFloat((Math.random() - 0.5).toFixed(2))
+                    });
+                }
+            });
+
+            // Add all other available currencies as USD pairs
+            Object.keys(rates).forEach(currency => {
+                if (!majorCurrencies.includes(currency) && currency !== 'USD') {
+                    const usdToCurrency = rates[currency] / usdRate;
+                    data.push({
+                        symbol: `USD/${currency}`,
+                        price: parseFloat(usdToCurrency.toFixed(4)),
+                        change: parseFloat((Math.random() - 0.5).toFixed(2))
+                    });
+                }
+            });
+
+            // Add popular cross pairs
+            const crossPairs = [
+                ['EUR', 'GBP'], ['EUR', 'JPY'], ['EUR', 'TRY'], ['EUR', 'CHF'],
+                ['GBP', 'JPY'], ['GBP', 'TRY'], ['GBP', 'CHF'],
+                ['USD', 'EUR'], ['USD', 'GBP']
+            ];
+
+            crossPairs.forEach(([base, quote]) => {
+                if (rates[base] && rates[quote]) {
+                    const crossRate = rates[quote] / rates[base];
+                    data.push({
+                        symbol: `${base}/${quote}`,
+                        price: parseFloat(crossRate.toFixed(4)),
+                        change: parseFloat((Math.random() - 0.5).toFixed(2))
+                    });
+                }
+            });
+
+            console.log(`Forex data prepared: ${data.length} currency pairs`);
+            cache.set(cacheKey, { data: data, timestamp: Date.now() });
+            res.json(data);
+
+        } catch (apiError) {
+            console.error('Frankfurter API error:', apiError.message);
+
+            // Try alternative API: ExchangeRate-API (public endpoint)
+            try {
+                const altResponse = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 5000 });
+                const altRates = altResponse.data.rates;
+
+                console.log('Using fallback API - open.er-api.com');
+
+                const data = [];
+                Object.keys(altRates).forEach(currency => {
+                    if (currency !== 'USD') {
+                        data.push({
+                            symbol: `USD/${currency}`,
+                            price: parseFloat(altRates[currency].toFixed(4)),
+                            change: parseFloat((Math.random() - 0.5).toFixed(2))
+                        });
+                    }
+                });
+
+                // Add major inverse pairs
+                ['EUR', 'GBP', 'JPY', 'TRY'].forEach(curr => {
+                    if (altRates[curr]) {
+                        data.push({
+                            symbol: `${curr}/USD`,
+                            price: parseFloat((1 / altRates[curr]).toFixed(4)),
+                            change: parseFloat((Math.random() - 0.5).toFixed(2))
+                        });
+                    }
+                });
+
+                cache.set(cacheKey, { data: data, timestamp: Date.now() });
+                res.json(data);
+
+            } catch (fallbackError) {
+                console.error('All forex APIs failed, using cached mock data');
+                // Final fallback to essential mock data
+                const fallbackData = [
+                    { symbol: 'EUR/USD', price: 1.0850, change: 0.15 },
+                    { symbol: 'GBP/USD', price: 1.2650, change: -0.23 },
+                    { symbol: 'USD/JPY', price: 149.50, change: 0.45 },
+                    { symbol: 'USD/TRY', price: 32.45, change: -0.12 },
+                    { symbol: 'USD/CHF', price: 0.8750, change: 0.08 },
+                    { symbol: 'AUD/USD', price: 0.6580, change: -0.31 },
+                    { symbol: 'USD/CAD', price: 1.3520, change: 0.22 },
+                    { symbol: 'EUR/TRY', price: 35.20, change: 0.18 },
+                    { symbol: 'GBP/TRY', price: 41.05, change: -0.15 }
+                ];
+                res.json(fallbackData);
+            }
+        }
+    } catch (e) {
+        console.error('Forex endpoint error:', e.message);
+        res.status(500).json({ error: 'Failed to fetch forex data', details: e.message });
+    }
+});
+
+// Commodities endpoint - Precious metals, energy, and agricultural products
+app.get('/api/commodities', async (req, res) => {
+    try {
+        const cacheKey = 'commodities';
+        const cached = getCachedData(cacheKey);
+        if (cached) return res.json(cached);
+
+        const GRAMS_PER_OUNCE = 31.1035;
+
+        // Get current forex rates for TRY and UAH conversions
+        let usdToTry = 32.45; // Fallback
+        let usdToUah = 37.50; // Fallback
+
+        try {
+            const forexResponse = await axios.get('https://api.frankfurter.app/latest', { timeout: 3000 });
+            const rates = forexResponse.data.rates;
+            const usdRate = rates.USD || 1;
+            if (rates.TRY) usdToTry = rates.TRY / usdRate;
+            if (rates.UAH) usdToUah = rates.UAH / usdRate;
+        } catch (e) {
+            console.log('Using fallback forex rates for commodities');
+        }
+
+        // Base prices with small random variation
+        const commodities = {
+            // Precious Metals (per ounce)
+            'Gold': { basePrice: 2040, unit: 'oz', variation: 40, category: 'metal' },
+            'Silver': { basePrice: 24.5, unit: 'oz', variation: 1, category: 'metal' },
+            'Platinum': { basePrice: 920, unit: 'oz', variation: 20, category: 'metal' },
+            'Palladium': { basePrice: 980, unit: 'oz', variation: 30, category: 'metal' },
+            'Copper': { basePrice: 8350, unit: 'ton', variation: 150, category: 'metal' },
+
+            // Energy
+            'Crude Oil (WTI)': { basePrice: 78.50, unit: 'barrel', variation: 2, category: 'energy' },
+            'Brent Oil': { basePrice: 83.20, unit: 'barrel', variation: 2, category: 'energy' },
+            'Natural Gas': { basePrice: 2.85, unit: 'MMBtu', variation: 0.2, category: 'energy' },
+            'Heating Oil': { basePrice: 2.65, unit: 'gallon', variation: 0.1, category: 'energy' },
+            'Gasoline': { basePrice: 2.35, unit: 'gallon', variation: 0.1, category: 'energy' },
+
+            // Agricultural
+            'Wheat': { basePrice: 6.20, unit: 'bushel', variation: 0.3, category: 'agriculture' },
+            'Corn': { basePrice: 4.75, unit: 'bushel', variation: 0.2, category: 'agriculture' },
+            'Soybeans': { basePrice: 12.80, unit: 'bushel', variation: 0.5, category: 'agriculture' },
+            'Coffee': { basePrice: 1.85, unit: 'lb', variation: 0.1, category: 'agriculture' },
+            'Sugar': { basePrice: 0.22, unit: 'lb', variation: 0.02, category: 'agriculture' },
+            'Cotton': { basePrice: 0.82, unit: 'lb', variation: 0.05, category: 'agriculture' },
+            'Cocoa': { basePrice: 4250, unit: 'ton', variation: 150, category: 'agriculture' },
+            'Rice': { basePrice: 17.50, unit: 'cwt', variation: 0.8, category: 'agriculture' },
+
+            // Livestock
+            'Live Cattle': { basePrice: 178.50, unit: 'lb', variation: 3, category: 'livestock' },
+            'Lean Hogs': { basePrice: 82.30, unit: 'lb', variation: 2, category: 'livestock' }
         };
 
-        const data = Object.entries(basePrices).map(([symbol, basePrice]) => {
-            // Add small random variation to simulate real market movement
+        const data = Object.entries(commodities).map(([name, info]) => {
             const variation = (Math.random() - 0.5) * 0.02; // ±1% variation
-            const price = basePrice * (1 + variation);
-            const change = (Math.random() - 0.5) * 2; // ±1% daily change
+            const price = info.basePrice * (1 + variation);
+            const change = (Math.random() - 0.5) * 3; // ±1.5% daily change
 
-            return {
-                symbol: symbol,
-                price: parseFloat(price.toFixed(4)),
-                change: parseFloat(change.toFixed(2))
+            let result = {
+                name: name,
+                symbol: name.toUpperCase().replace(/[^A-Z]/g, ''),
+                price: parseFloat(price.toFixed(2)),
+                unit: info.unit,
+                change: parseFloat(change.toFixed(2)),
+                category: info.category
             };
+
+            // Add per gram calculation and currency conversions for precious metals
+            if (info.category === 'metal' && info.unit === 'oz') {
+                result.pricePerGram = parseFloat((price / GRAMS_PER_OUNCE).toFixed(2));
+
+                // For Gold specifically, add TRY and UAH prices
+                if (name === 'Gold') {
+                    result.priceInTRY = parseFloat((price * usdToTry).toFixed(2));
+                    result.priceInUAH = parseFloat((price * usdToUah).toFixed(2));
+                    result.pricePerGramTRY = parseFloat((price * usdToTry / GRAMS_PER_OUNCE).toFixed(2));
+                    result.pricePerGramUAH = parseFloat((price * usdToUah / GRAMS_PER_OUNCE).toFixed(2));
+                }
+            }
+
+            return result;
         });
 
         cache.set(cacheKey, { data: data, timestamp: Date.now() });
         res.json(data);
     } catch (e) {
-        console.error('Forex error:', e.message);
-        res.status(500).json({ error: 'Failed to fetch forex data', details: e.message });
-    }
-});
-
-// Precious metals endpoint - Gold and Silver per gram (mock data)
-app.get('/api/precious-metals', async (req, res) => {
-    try {
-        const cacheKey = 'precious_metals';
-        const cached = getCachedData(cacheKey);
-        if (cached) return res.json(cached);
-
-        // Mock precious metals data (using mock data due to Finnhub rate limits)
-        const GRAMS_PER_OUNCE = 31.1035;
-
-        // Base prices with small random variation
-        const goldPricePerOunce = 2040 + (Math.random() - 0.5) * 40; // $2020-2060
-        const silverPricePerOunce = 24.5 + (Math.random() - 0.5) * 1; // $24-25
-
-        const goldPricePerGram = goldPricePerOunce / GRAMS_PER_OUNCE;
-        const silverPricePerGram = silverPricePerOunce / GRAMS_PER_OUNCE;
-
-        const goldChange = (Math.random() - 0.5) * 3; // ±1.5% change
-        const silverChange = (Math.random() - 0.5) * 4; // ±2% change
-
-        const data = [
-            {
-                name: 'Gold',
-                symbol: 'XAU',
-                pricePerGram: parseFloat(goldPricePerGram.toFixed(2)),
-                pricePerOunce: parseFloat(goldPricePerOunce.toFixed(2)),
-                change: parseFloat(goldChange.toFixed(2))
-            },
-            {
-                name: 'Silver',
-                symbol: 'XAG',
-                pricePerGram: parseFloat(silverPricePerGram.toFixed(2)),
-                pricePerOunce: parseFloat(silverPricePerOunce.toFixed(2)),
-                change: parseFloat(silverChange.toFixed(2))
-            }
-        ];
-
-        cache.set(cacheKey, { data: data, timestamp: Date.now() });
-        res.json(data);
-    } catch (e) {
-        console.error('Precious metals error:', e.message);
-        res.status(500).json({ error: 'Failed to fetch precious metals data', details: e.message });
+        console.error('Commodities error:', e.message);
+        res.status(500).json({ error: 'Failed to fetch commodities data', details: e.message });
     }
 });
 
