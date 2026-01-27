@@ -5,7 +5,7 @@
 
 // --- Configuration & Data Maps ---
 const config = {
-    crypto: ['bitcoin', 'ethereum', 'solana', 'binancecoin', 'ripple', 'cardano', 'dogecoin', 'polkadot', 'tron', 'chainlink', 'avalanche-2', 'shiba-inu', 'toncoin', 'stellar', 'sui'],
+    crypto: ['bitcoin', 'ethereum', 'solana', 'binancecoin', 'ripple', 'cardano', 'dogecoin', 'polkadot', 'tron', 'chainlink', 'avalanche-2', 'shiba-inu', 'toncoin', 'stellar', 'sui', 'litecoin', 'bitcoin-cash', 'near', 'aptos', 'cosmos', 'fantom', 'optimism', 'arbitrum', 'render-token', 'okb', 'monero', 'kaspa', 'bittensor', 'staked-ether'],
     stocks: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC'],
     refreshInterval: 30000 // 30 seconds
 };
