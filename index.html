@@ -143,6 +143,14 @@
                     </div>
                 </div>
 
+                <!-- Emergency Initialize (Hidden by default) -->
+                <div id="emergency-init" class="hidden" style="text-align: center; padding: 50px;">
+                    <p style="color: #888; margin-bottom: 20px;">Still loading? Try a force restart.</p>
+                    <button onclick="forceAppInit()" class="swap-btn" style="width: auto; padding: 10px 25px;">Force
+                        System Start</button>
+                    <p style="font-size: 0.7rem; color: #555; margin-top: 15px;">Version 2.4 - Chrome Rescue Mode</p>
+                </div>
+
                 <!-- Settings View -->
                 <div id="view-settings" class="view-section hidden">
                     <div class="card settings-card">
@@ -222,9 +230,28 @@
     </div>
 
     <div id="toast-container"></div>
-    <script src="translations.js"></script>
-    <script src="icons.js"></script>
-    <script src="app.js?v=2.3"></script>
+
+    <!-- Script Loading Order is Critical -->
+    <script>
+        // Emergency Force Init Function
+        function forceAppInit() {
+            console.warn('System Force Initialize Triggered');
+            localStorage.clear();
+            localStorage.setItem('app_version', '2.4');
+            location.reload(true);
+        }
+
+        // Show emergency button if nothing loads in 5 seconds
+        setTimeout(() => {
+            const dashboard = document.getElementById('crypto-grid');
+            if (dashboard && dashboard.innerHTML.includes('Loading')) {
+                document.getElementById('emergency-init')?.classList.remove('hidden');
+            }
+        }, 5000);
+    </script>
+    <script src="translations.js?v=2.4"></script>
+    <script src="icons.js?v=2.4"></script>
+    <script src="app.js?v=2.4"></script>
 </body>
 
 </html>

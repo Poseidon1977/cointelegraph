@@ -116,13 +116,27 @@ window.onerror = function (message, source, lineno, colno, error) {
     return false;
 };
 
+// Check if localStorage is available
+function isStorageAvailable() {
+    try {
+        const test = '__storage_test__';
+        localStorage.setItem(test, test);
+        localStorage.removeItem(test);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        console.log('Initializing Application v2.3...');
+        console.log('Initializing Application v2.4 (Chrome Optimized)...');
+
+        const storageOk = isStorageAvailable();
 
         // Version-based cache clearing to avoid structure mismatches
-        const APP_VERSION = '2.3';
-        if (localStorage.getItem('app_version') !== APP_VERSION) {
+        const APP_VERSION = '2.4';
+        if (storageOk && localStorage.getItem('app_version') !== APP_VERSION) {
             console.log('Updating application version, clearing old cache...');
             const lang = localStorage.getItem('app_lang');
             localStorage.clear();
