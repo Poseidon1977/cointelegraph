@@ -1,3 +1,7 @@
+/**
+ * CoinTelegraph Localization v4.0
+ */
+
 const translations = {
     tr: {
         'dashboard': 'Piyasa Özeti',
@@ -6,12 +10,12 @@ const translations = {
         'forex': 'Döviz / Forex',
         'news': 'Dünya Haberleri',
         'settings': 'Ayarlar',
-        'crypto_title': 'Kripto Para Piyasası',
-        'stocks_title': 'Global Hisse Senetleri',
-        'commodities_title': 'Emtia Fiyatları',
-        'forex_title': 'Döviz Kurları',
-        'news_title': 'Son Dakika Haberler',
-        'settings_title': 'Uygulama Ayarları',
+        'market_overview': 'Piyasa Özeti',
+        'global_stocks': 'Küresel Hisseler',
+        'commodity_prices': 'Emtia Fiyatları',
+        'forex_rates': 'Döviz Kurları',
+        'breaking_news': 'Son Dakika Haberler',
+        'preferences': 'Uygulama Ayarları',
         'lang_label': 'Dil Seçimi',
         'converter': 'Döviz Çevirici',
         'amount': 'Miktar',
@@ -25,7 +29,6 @@ const translations = {
         'agri': 'Tarım',
         'livestock': 'Hayvancılık',
         'gram_altin': 'GRAM ALTIN',
-        'global_market': 'KÜRESEL PİYASA',
         'viewing': 'görüntüleniyor'
     },
     en: {
@@ -35,26 +38,25 @@ const translations = {
         'forex': 'Foreign Exchange',
         'news': 'Global News',
         'settings': 'Settings',
-        'crypto_title': 'Crypto Market',
-        'stocks_title': 'Global Stocks',
-        'commodities_title': 'Commodity Prices',
-        'forex_title': 'Forex Rates',
-        'news_title': 'Breaking News',
-        'settings_title': 'Settings',
-        'lang_label': 'Language Selection',
+        'market_overview': 'Market Overview',
+        'global_stocks': 'Global Stocks',
+        'commodity_prices': 'Commodity Prices',
+        'forex_rates': 'Forex Rates',
+        'breaking_news': 'Breaking News',
+        'preferences': 'Preferences',
+        'lang_label': 'Language',
         'converter': 'Currency Converter',
         'amount': 'Amount',
         'from': 'From',
         'to': 'To',
         'swap': 'Swap',
         'result': 'Result',
-        'gold_title': '🥇 gold',
+        'gold_title': '🥇 Gold',
         'metals': 'Precious Metals',
         'energy': 'Energy',
         'agri': 'Agriculture',
         'livestock': 'Livestock',
         'gram_altin': 'GRAM GOLD',
-        'global_market': 'GLOBAL MARKET',
         'viewing': 'viewing'
     },
     ua: {
@@ -62,14 +64,14 @@ const translations = {
         'stocks': 'Фондовий ринок',
         'commodities': 'Товари',
         'forex': 'Форекс',
-        'news': 'Новини',
+        'news': 'Новини світу',
         'settings': 'Налаштування',
-        'crypto_title': 'Крипторинок',
-        'stocks_title': 'Акції',
-        'commodities_title': 'Ціни на товари',
-        'forex_title': 'Курси валют',
-        'news_title': 'Останні новини',
-        'settings_title': 'Налаштування',
+        'market_overview': 'Огляд ринку',
+        'global_stocks': 'Глобальні акції',
+        'commodity_prices': 'Ціни на товари',
+        'forex_rates': 'Курси валют',
+        'breaking_news': 'Останні новини',
+        'preferences': 'Налаштування',
         'lang_label': 'Вибір мови',
         'converter': 'Конвертер валют',
         'amount': 'Сума',
@@ -83,7 +85,6 @@ const translations = {
         'agri': 'Сільське господарство',
         'livestock': 'Тваринництво',
         'gram_altin': 'ГРАМ ЗОЛОТА',
-        'global_market': 'ГЛОБАЛЬНИЙ РИНОК',
         'viewing': 'перегляд'
     },
     de: {
@@ -91,14 +92,14 @@ const translations = {
         'stocks': 'Aktienmarkt',
         'commodities': 'Rohstoffe',
         'forex': 'Devisen',
-        'news': 'Nachrichten',
+        'news': 'Weltnachrichten',
         'settings': 'Einstellungen',
-        'crypto_title': 'Kryptomarkt',
-        'stocks_title': 'Aktien',
-        'commodities_title': 'Rohstoffpreise',
-        'forex_title': 'Wechselkurse',
-        'news_title': 'Nachrichten',
-        'settings_title': 'Einstellungen',
+        'market_overview': 'Marktübersicht',
+        'global_stocks': 'Globale Aktien',
+        'commodity_prices': 'Rohstoffpreise',
+        'forex_rates': 'Wechselkurse',
+        'breaking_news': 'Nachrichten',
+        'preferences': 'Einstellungen',
         'lang_label': 'Sprachauswahl',
         'converter': 'Währungsrechner',
         'amount': 'Betrag',
@@ -112,7 +113,6 @@ const translations = {
         'agri': 'Landwirtschaft',
         'livestock': 'Viehbestand',
         'gram_altin': 'GRAMM GOLD',
-        'global_market': 'GLOBALER MARKT',
         'viewing': 'wird angezeigt'
     }
 };
@@ -125,45 +125,41 @@ function t(key) {
 function updateUILanguage() {
     try {
         const lang = localStorage.getItem('app_lang') || 'en';
+        document.documentElement.lang = lang;
 
-        // Update body class for potential CSS styling per lang
-        document.body.className = `lang-${lang}`;
-
-        // Update nav items
-        document.querySelectorAll('.nav-item').forEach(item => {
-            const target = item.dataset.target;
-            const textSpan = item.querySelector('span:not(.nav-icon)');
-            if (textSpan && target) textSpan.innerText = t(target);
-        });
-
-        // Update headers and labels
-        const pageTitle = document.getElementById('page-title');
-        if (pageTitle) {
-            const currentView = window.currentView || 'dashboard';
-            pageTitle.innerText = t(currentView);
-        }
-
-        // Converter labels
-        const convLabels = {
-            'conv-title-text': 'converter',
-            'label-amount': 'amount',
-            'label-from': 'from',
-            'label-to': 'to',
-            'conv-swap': 'swap',
-            'conv-result-label': 'result'
+        // Update Page Title Mapping
+        const viewTitles = {
+            'dashboard': 'market_overview',
+            'stocks': 'global_stocks',
+            'commodities': 'commodity_prices',
+            'forex': 'forex_rates',
+            'news': 'breaking_news',
+            'settings': 'preferences'
         };
 
-        for (const [id, key] of Object.entries(convLabels)) {
+        const currentView = (typeof State !== 'undefined') ? State.currentView : 'dashboard';
+        const titleEl = document.getElementById('page-title');
+        if (titleEl) titleEl.innerText = t(viewTitles[currentView]);
+
+        // Navigation Sync
+        Object.keys(viewTitles).forEach(view => {
+            const navSpan = document.getElementById(`nav-${view}`);
+            if (navSpan) navSpan.innerText = t(view);
+        });
+
+        // Other static labels
+        const staticMap = {
+            'conv-title': 'converter',
+            'label-lang': 'lang_label',
+            'set-title': 'preferences'
+        };
+
+        Object.entries(staticMap).forEach(([id, key]) => {
             const el = document.getElementById(id);
             if (el) el.innerText = t(key);
-        }
+        });
 
-        // Refresh current view data to apply translations in grids
-        // Only if it's the first load or if navigate triggered it
-        if (typeof fetchCurrentViewData === 'function') {
-            fetchCurrentViewData();
-        }
     } catch (e) {
-        console.warn('UI Language update failed:', e);
+        console.warn('UI Language Sync non-fatal error:', e);
     }
 }
