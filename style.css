@@ -434,8 +434,8 @@ body {
 /* Responsive */
 @media (max-width: 900px) {
     .sidebar {
-        height: 60px;
-        padding: 0 8px;
+        height: 65px;
+        padding: 0 10px;
     }
 
     .brand,
