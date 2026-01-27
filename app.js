@@ -66,6 +66,97 @@ function bootstrap() {
 
 // --- Internal Managers ---
 
+function setupLanguage() {
+    const langSelect = document.getElementById('lang-select');
+    if (!langSelect) return;
+
+    langSelect.value = State.language;
+    langSelect.addEventListener('change', (e) => {
+        State.language = e.target.value;
+        if (State.storageAvailable) localStorage.setItem('app_lang', State.language);
+        updateUILanguage();
+    });
+}
+
+function setupSearch() {
+    const searchInput = document.getElementById('global-search');
+    const dropdown = document.getElementById('search-dropdown');
+    if (!searchInput || !dropdown) return;
+
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (!query) {
+            dropdown.classList.add('hidden');
+            return;
+        }
+
+        // Search in cached crypto data as primary source
+        const results = (State.data['dashboard'] || [])
+            .filter(coin => coin.name.toLowerCase().includes(query) || coin.symbol.toLowerCase().includes(query))
+            .slice(0, 5);
+
+        if (results.length > 0) {
+            dropdown.innerHTML = results.map(coin => `
+                <div class="search-item" onclick="State.currentView='dashboard';navigateTo('dashboard');openAssetModal('dashboard', ${JSON.stringify(coin).replace(/"/g, '&quot;')})">
+                    ${getCryptoIcon(coin.symbol, coin.image)}
+                    <span>${coin.name} (${coin.symbol.toUpperCase()})</span>
+                </div>
+            `).join('');
+            dropdown.classList.remove('hidden');
+        } else {
+            dropdown.innerHTML = '<div class="search-info">No matches found</div>';
+            dropdown.classList.remove('hidden');
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target)) dropdown.classList.add('hidden');
+    });
+}
+
+async function fetchNews() {
+    const feed = document.getElementById('news-feed');
+    if (!feed) return;
+
+    try {
+        const res = await fetch('/api/news');
+        const data = await res.json();
+
+        feed.innerHTML = data.slice(0, 10).map(item => `
+            <div class="news-card card">
+                ${item.image ? `<img src="${item.image}" class="news-image">` : ''}
+                <div class="news-meta">
+                    <span class="source">${item.source}</span>
+                    <span class="date">${new Date(item.datetime * 1000).toLocaleTimeString()}</span>
+                </div>
+                <h3><a href="${item.url}" target="_blank">${item.headline}</a></h3>
+                <p>${item.summary?.substring(0, 120)}...</p>
+            </div>
+        `).join('');
+    } catch (e) {
+        feed.innerHTML = '<div class="error">Failed to load world news.</div>';
+    }
+}
+
+function loadCachedData(view) {
+    if (!State.storageAvailable) return;
+    const cached = localStorage.getItem(`cache_${view}`);
+    if (cached) {
+        try {
+            const data = JSON.parse(cached);
+            renderView(view, data);
+            console.log(`Loaded fallback cache for ${view}`);
+        } catch (e) { }
+    }
+}
+
+function showRescueUI() {
+    document.getElementById('rescue-layer')?.classList.remove('hidden');
+}
+
+// Global UI Language Update Trigger (for translations.js)
+window.setupLanguage = setupLanguage;
+
 function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
@@ -91,6 +182,7 @@ function navigateTo(viewId, isInitial = false) {
         el.classList.toggle('active', el.dataset.view === viewId);
     });
 
+    const viewEl = document.getElementById(`view-${viewId}`);
     document.querySelectorAll('.view-section').forEach(el => {
         el.classList.toggle('hidden', el.id !== `view-${viewId}`);
         el.classList.toggle('active', el.id === `view-${viewId}`);
@@ -98,6 +190,10 @@ function navigateTo(viewId, isInitial = false) {
 
     // Update Title & Refresh Data
     if (typeof updateUILanguage === 'function') updateUILanguage();
+
+    // Smooth scroll to top when changing views
+    document.querySelector('.view-container')?.scrollTo(0, 0);
+
     if (!isInitial) fetchMarketData();
 }
 
@@ -121,6 +217,8 @@ async function fetchMarketData() {
 
         if (data && Array.isArray(data)) {
             State.data[view] = data;
+            // Persist for offline
+            if (State.storageAvailable) localStorage.setItem(`cache_${view}`, JSON.stringify(data));
             renderView(view, data);
         }
     } catch (e) {
@@ -130,7 +228,8 @@ async function fetchMarketData() {
 }
 
 function renderView(view, data) {
-    const grid = document.getElementById(view === 'dashboard' ? 'crypto-grid' : `${view}-grid`);
+    const gridId = view === 'dashboard' ? 'crypto-grid' : `${view}-grid`;
+    const grid = document.getElementById(gridId);
     if (!grid) return;
 
     grid.innerHTML = '';
@@ -138,6 +237,10 @@ function renderView(view, data) {
     if (view === 'commodities') {
         renderCommodities(grid, data);
         return;
+    }
+
+    if (view === 'forex' && typeof updateConverter === 'function') {
+        updateConverter(data);
     }
 
     data.forEach(item => {
@@ -205,12 +308,12 @@ function renderCommodities(grid, data) {
         const header = document.createElement('div');
         header.className = 'category-header';
         header.style.gridColumn = '1 / -1';
+        header.style.marginTop = '20px';
         header.innerHTML = `<h3>${t(key === 'gold' ? 'gold_title' : key)}</h3>`;
         grid.appendChild(header);
 
         items.forEach(item => {
             if (key === 'gold') {
-                // Render Gold variations (USD, TRY, UAH)
                 renderGoldCards(grid, item);
             } else {
                 const card = createCommodityCard(item);
@@ -236,6 +339,7 @@ function createCommodityCard(item) {
             <div class="asset-symbol">${item.symbol}</div>
         </div>
     `;
+    card.onclick = () => openAssetModal('commodities', item);
     return card;
 }
 
@@ -251,10 +355,11 @@ function renderGoldCards(grid, item) {
             <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/tr.png" style="width:20px"> ALTIN/TRY</div>
         </header>
         <div class="price-box">
-            <div class="current-price" style="color:var(--warning)">₺${item.pricePerGramTRY?.toLocaleString('tr-TR')}</div>
+            <div class="current-price" style="color:var(--warning)">₺${item.priceInTRY ? (item.priceInTRY / 31.1035).toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : '...'}</div>
             <div class="asset-symbol">GRAM ALTIN (TRY)</div>
         </div>
     `;
+    cardTRY.onclick = () => openAssetModal('commodities', item);
     grid.appendChild(cardTRY);
 
     // 3. UAH Card
@@ -265,11 +370,69 @@ function renderGoldCards(grid, item) {
             <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/ua.png" style="width:20px"> GOLD/UAH</div>
         </header>
         <div class="price-box">
-            <div class="current-price" style="color:var(--accent)">₴${item.pricePerGramUAH?.toLocaleString('uk-UA')}</div>
+            <div class="current-price" style="color:var(--accent)">₴${item.priceInUAH ? (item.priceInUAH / 31.1035).toLocaleString('uk-UA', { maximumFractionDigits: 0 }) : '...'}</div>
             <div class="asset-symbol">GRAM GOLD (UAH)</div>
         </div>
     `;
+    cardUAH.onclick = () => openAssetModal('commodities', item);
     grid.appendChild(cardUAH);
+}
+
+// --- Converter Logic ---
+function updateConverter(data) {
+    const from = document.getElementById('conv-from');
+    const to = document.getElementById('conv-to');
+    if (!from || !to || from.options.length > 0) return;
+
+    // Get unique currencies
+    const currencies = new Set();
+    data.forEach(p => {
+        const parts = p.symbol.split('/');
+        parts.forEach(c => currencies.add(c));
+    });
+
+    Array.from(currencies).sort().forEach(c => {
+        from.add(new Option(c, c));
+        to.add(new Option(c, c));
+    });
+
+    from.value = 'USD';
+    to.value = 'TRY';
+
+    const calc = () => {
+        const amount = parseFloat(document.getElementById('conv-amount').value) || 0;
+        const f = from.value;
+        const t = to.value;
+        const resEl = document.getElementById('conv-res-val');
+
+        if (f === t) {
+            resEl.innerText = amount.toFixed(2);
+            return;
+        }
+
+        // Simple cross-rate logic
+        const pair = data.find(p => p.symbol === `${f}/${t}`);
+        const rev = data.find(p => p.symbol === `${t}/${f}`);
+
+        if (pair) {
+            resEl.innerText = (amount * pair.price).toLocaleString();
+        } else if (rev) {
+            resEl.innerText = (amount / rev.price).toLocaleString();
+        } else {
+            resEl.innerText = "---";
+        }
+    };
+
+    document.getElementById('conv-amount').oninput = calc;
+    from.onchange = calc;
+    to.onchange = calc;
+    document.getElementById('conv-swap').onclick = () => {
+        const tmp = from.value;
+        from.value = to.value;
+        to.value = tmp;
+        calc();
+    };
+    calc();
 }
 
 // --- Modals & UI Helpers ---
@@ -279,13 +442,24 @@ function openAssetModal(type, item) {
     if (!modal) return;
 
     document.getElementById('modal-name').innerText = item.name || item.symbol;
-    document.getElementById('modal-price').innerText = createAssetCard(type, item).querySelector('.current-price').innerText;
 
-    const change = (type === 'dashboard') ? item.price_change_percentage_24h : item.change;
+    // Safety check for price
+    let priceText = '...';
+    try {
+        if (type === 'commodities') {
+            priceText = item.pricePerGram ? `$${item.pricePerGram}/g` : `$${item.price}/${item.unit}`;
+        } else {
+            priceText = createAssetCard(type, item).querySelector('.current-price').innerText;
+        }
+    } catch (e) { }
+
+    document.getElementById('modal-price').innerText = priceText;
+
+    const change = (type === 'dashboard') ? (item.price_change_percentage_24h || 0) : (item.change || 0);
     const badge = document.getElementById('modal-change');
     const isUp = change >= 0;
     badge.className = `badge ${isUp ? 'bg-up' : 'bg-down'}`;
-    badge.innerText = `${isUp ? '▲' : '▼'} ${Math.abs(change || 0).toFixed(2)}%`;
+    badge.innerText = `${isUp ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%`;
 
     modal.classList.remove('hidden');
     drawChart(isUp);
@@ -293,6 +467,7 @@ function openAssetModal(type, item) {
 
 function drawChart(isUp) {
     const el = document.getElementById('detail-chart');
+    if (!el) return;
     el.innerHTML = '';
 
     const options = {
@@ -310,6 +485,7 @@ function drawChart(isUp) {
 
 function setupClock() {
     const el = document.getElementById('date-display');
+    if (!el) return;
     const tick = () => {
         el.innerText = new Date().toLocaleTimeString('tr-TR');
     };
@@ -335,11 +511,12 @@ function setupRescuer() {
 // Global Error Handler
 window.onerror = (msg, src, line) => {
     console.error(`Script Error: ${msg} at ${src}:${line}`);
-    showToast(`System Notice: Active updates in progress...`);
+    showToast(`System Notice: Auto-repair triggered...`);
 };
 
 function showToast(msg) {
     const container = document.getElementById('toast-container');
+    if (!container) return;
     const toast = document.createElement('div');
     toast.className = 'toast card';
     toast.style.padding = '10px 20px';
@@ -363,5 +540,6 @@ if (document.readyState === 'loading') {
 }
 
 // Close Modal logic
-document.getElementById('close-modal')?.onclick = () => document.getElementById('asset-modal').classList.add('hidden');
-window.onclick = (e) => { if (e.target.classList.contains('modal-overlay')) e.target.classList.add('hidden'); };
+document.getElementById('close-modal')?.addEventListener('click', () => document.getElementById('asset-modal').classList.add('hidden'));
+window.addEventListener('click', (e) => { if (e.target.classList.contains('modal-overlay')) e.target.classList.add('hidden'); });
+
