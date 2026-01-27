@@ -135,22 +135,34 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupNavigation() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
-            const target = item.dataset.target;
-            window.currentView = target;
+            try {
+                const target = item.dataset.target;
+                if (!target) return;
 
-            // Update UI
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            item.classList.add('active');
+                console.log(`Navigating to: ${target}`);
+                window.currentView = target;
 
-            document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+                // Update UI state
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
 
-            const view = document.getElementById(`view-${target}`);
-            if (view) {
-                view.classList.remove('hidden');
-                view.classList.add('active');
-                updateUILanguage(); // Instant sync
-                fetchCurrentViewData();
+                document.querySelectorAll('.view-section').forEach(v => {
+                    v.classList.add('hidden');
+                    v.classList.remove('active');
+                });
+
+                const view = document.getElementById(`view-${target}`);
+                if (view) {
+                    view.classList.remove('hidden');
+                    view.classList.add('active');
+
+                    // updateUILanguage will sync the title and potentially fetch data
+                    updateUILanguage();
+                } else {
+                    console.error(`View element not found: view-${target}`);
+                }
+            } catch (error) {
+                console.error('Navigation error:', error);
             }
         });
     });
@@ -298,10 +310,13 @@ async function fetchCommodities() {
     try {
         const res = await fetch('/api/commodities');
         const data = await res.json();
+        if (!data || !Array.isArray(data)) {
+            throw new Error('Invalid commodities data received');
+        }
 
         localStorage.setItem('cache_commodities', JSON.stringify(data));
 
-        if (!data || data.length === 0) {
+        if (data.length === 0) {
             grid.innerHTML = '<div class="loading">No commodities data available</div>';
             return;
         }

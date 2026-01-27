@@ -123,42 +123,47 @@ function t(key) {
 }
 
 function updateUILanguage() {
-    const lang = localStorage.getItem('app_lang') || 'en';
+    try {
+        const lang = localStorage.getItem('app_lang') || 'en';
 
-    // Update body class for potential CSS styling per lang
-    document.body.className = `lang-${lang}`;
+        // Update body class for potential CSS styling per lang
+        document.body.className = `lang-${lang}`;
 
-    // Update nav items
-    document.querySelectorAll('.nav-item').forEach(item => {
-        const target = item.dataset.target;
-        const textSpan = item.querySelector('span:not(.nav-icon)');
-        if (textSpan) textSpan.innerText = t(target);
-    });
+        // Update nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            const target = item.dataset.target;
+            const textSpan = item.querySelector('span:not(.nav-icon)');
+            if (textSpan && target) textSpan.innerText = t(target);
+        });
 
-    // Update headers and labels
-    const pageTitle = document.getElementById('page-title');
-    if (pageTitle) {
-        const currentView = window.currentView || 'dashboard';
-        pageTitle.innerText = t(currentView);
-    }
+        // Update headers and labels
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) {
+            const currentView = window.currentView || 'dashboard';
+            pageTitle.innerText = t(currentView);
+        }
 
-    // Converter labels
-    const convLabels = {
-        'conv-title-text': 'converter',
-        'label-amount': 'amount',
-        'label-from': 'from',
-        'label-to': 'to',
-        'conv-swap': 'swap',
-        'conv-result-label': 'result'
-    };
+        // Converter labels
+        const convLabels = {
+            'conv-title-text': 'converter',
+            'label-amount': 'amount',
+            'label-from': 'from',
+            'label-to': 'to',
+            'conv-swap': 'swap',
+            'conv-result-label': 'result'
+        };
 
-    for (const [id, key] of Object.entries(convLabels)) {
-        const el = document.getElementById(id);
-        if (el) el.innerText = t(key);
-    }
+        for (const [id, key] of Object.entries(convLabels)) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = t(key);
+        }
 
-    // Refresh current view data to apply translations in grids
-    if (typeof fetchCurrentViewData === 'function') {
-        fetchCurrentViewData();
+        // Refresh current view data to apply translations in grids
+        // Only if it's the first load or if navigate triggered it
+        if (typeof fetchCurrentViewData === 'function') {
+            fetchCurrentViewData();
+        }
+    } catch (e) {
+        console.warn('UI Language update failed:', e);
     }
 }
