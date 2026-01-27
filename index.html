@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CoinTelegraph</title>
-    <link rel="stylesheet" href="style.css?v=2.3">
+    <link rel="stylesheet" href="style.css?v=3.0">
     <link rel="manifest" href="manifest.json?v=2">
     <meta name="theme-color" content="#121212">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -144,11 +144,15 @@
                 </div>
 
                 <!-- Emergency Initialize (Hidden by default) -->
-                <div id="emergency-init" class="hidden" style="text-align: center; padding: 50px;">
-                    <p style="color: #888; margin-bottom: 20px;">Still loading? Try a force restart.</p>
-                    <button onclick="forceAppInit()" class="swap-btn" style="width: auto; padding: 10px 25px;">Force
-                        System Start</button>
-                    <p style="font-size: 0.7rem; color: #555; margin-top: 15px;">Version 2.4 - Chrome Rescue Mode</p>
+                <div id="emergency-init" class="hidden"
+                    style="text-align: center; padding: 50px; background: rgba(255, 61, 0, 0.05); border-radius: 12px; border: 1px dashed rgba(255, 61, 0, 0.3); margin-top: 20px;">
+                    <p style="color: #ff8a65; margin-bottom: 20px; font-weight: 500;">Connection issues or loading stall
+                        detected.</p>
+                    <button onclick="forceAppInit()" class="swap-btn"
+                        style="width: auto; padding: 12px 30px; background: #ff3d00; border: none; box-shadow: 0 4px 15px rgba(255, 61, 0, 0.4);">RESCUE:
+                        Force System Rebuild</button>
+                    <p style="font-size: 0.75rem; color: #666; margin-top: 15px;">Version 3.0 - Global Rescue Mode
+                        Engaged</p>
                 </div>
 
                 <!-- Settings View -->
@@ -235,23 +239,22 @@
     <script>
         // Emergency Force Init Function
         function forceAppInit() {
-            console.warn('System Force Initialize Triggered');
-            localStorage.clear();
-            localStorage.setItem('app_version', '2.4');
-            location.reload(true);
+            window.localStorage.clear();
+            window.localStorage.setItem('app_version', '3.0');
+            window.location.reload(true);
         }
 
-        // Show emergency button if nothing loads in 5 seconds
+        // Watchdog: Show rescue button if nothing loads in 6 seconds
         setTimeout(() => {
-            const dashboard = document.getElementById('crypto-grid');
-            if (dashboard && dashboard.innerHTML.includes('Loading')) {
+            if (!window.appInitialized) {
                 document.getElementById('emergency-init')?.classList.remove('hidden');
+                console.warn('Boot watchdog triggered: Application failed to initialize in time.');
             }
-        }, 5000);
+        }, 6000);
     </script>
-    <script src="translations.js?v=2.4"></script>
-    <script src="icons.js?v=2.4"></script>
-    <script src="app.js?v=2.4"></script>
+    <script src="translations.js?v=3.0"></script>
+    <script src="icons.js?v=3.0"></script>
+    <script src="app.js?v=3.0"></script>
 </body>
 
 </html>

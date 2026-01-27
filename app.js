@@ -128,14 +128,18 @@ function isStorageAvailable() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// Safe Boot Function
+function initApp() {
+    if (window.appInitialized) return;
+    window.appInitialized = true;
+
     try {
-        console.log('Initializing Application v2.4 (Chrome Optimized)...');
+        console.log('--- System Boot Sequence v3.0 ---');
 
         const storageOk = isStorageAvailable();
 
         // Version-based cache clearing to avoid structure mismatches
-        const APP_VERSION = '2.4';
+        const APP_VERSION = '3.0';
         if (storageOk && localStorage.getItem('app_version') !== APP_VERSION) {
             console.log('Updating application version, clearing old cache...');
             const lang = localStorage.getItem('app_lang');
@@ -145,8 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Initialize Language
-        const savedLang = localStorage.getItem('app_lang') || 'en';
-        localStorage.setItem('app_lang', savedLang);
+        const savedLang = storageOk ? (localStorage.getItem('app_lang') || 'en') : 'en';
+        if (storageOk) localStorage.setItem('app_lang', savedLang);
 
         setupNavigation();
         initClock();
@@ -158,17 +162,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (langSelect) {
             langSelect.value = savedLang;
             langSelect.addEventListener('change', (e) => {
-                localStorage.setItem('app_lang', e.target.value);
-                updateUILanguage();
+                if (storageOk) localStorage.setItem('app_lang', e.target.value);
+                if (typeof updateUILanguage === 'function') updateUILanguage();
             });
         }
 
         // Initial UI Translation
-        updateUILanguage();
+        if (typeof updateUILanguage === 'function') {
+            updateUILanguage();
+        } else {
+            console.warn('translations.js not ready yet. Retrying in 100ms...');
+            setTimeout(() => { if (typeof updateUILanguage === 'function') updateUILanguage(); }, 100);
+        }
+
+        console.log('--- System Boot Complete ---');
     } catch (e) {
         console.error('Fatal Initialization Error:', e);
     }
-});
+}
+
+// Global Boot Trigger
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
 
 function setupNavigation() {
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -595,6 +613,16 @@ document.addEventListener('keydown', (e) => {
 });
 
 function renderDetailChart(isUp) {
+    const chartContainer = document.querySelector("#asset-chart");
+    if (!chartContainer) return;
+
+    chartContainer.innerHTML = '<div class="loading">Loading Chart...</div>';
+
+    if (typeof ApexCharts === 'undefined') {
+        chartContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">Chart functionality unavailable. Please check your internet connection.</div>';
+        return;
+    }
+
     const options = {
         series: [{
             name: 'Price',
