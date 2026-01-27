@@ -139,13 +139,13 @@ function setupSearch() {
                     <span class="search-icon">${res.icon}</span>
                     <div class="search-meta">
                         <span class="search-name">${res.name}</span>
-                        <span class="search-tag">${res.symbol.toUpperCase()} • ${res.type.replace('dashboard', 'crypto')}</span>
+                        <span class="search-tag">${res.symbol.toUpperCase()} • ${t('search_' + res.type.replace('dashboard', 'crypto'))}</span>
                     </div>
                 </div>
             `).join('');
             dropdown.classList.remove('hidden');
         } else {
-            dropdown.innerHTML = '<div class="search-info">No matches found</div>';
+            dropdown.innerHTML = `<div class="search-info">${t('search_no_results')}</div>`;
             dropdown.classList.remove('hidden');
         }
     });
@@ -175,7 +175,7 @@ async function fetchNews() {
             </div>
         `).join('');
     } catch (e) {
-        feed.innerHTML = '<div class="error">Failed to load world news.</div>';
+        feed.innerHTML = `<div class="error">${t('news_error')}</div>`;
     }
 }
 
@@ -598,7 +598,9 @@ function setupClock() {
     const el = document.getElementById('date-display');
     if (!el) return;
     const tick = () => {
-        el.innerText = new Date().toLocaleTimeString('tr-TR');
+        const lang = localStorage.getItem('app_lang') || 'en';
+        const locale = lang === 'ua' ? 'uk-UA' : (lang === 'tr' ? 'tr-TR' : (lang === 'de' ? 'de-DE' : 'en-US'));
+        el.innerText = new Date().toLocaleTimeString(locale);
     };
     tick();
     setInterval(tick, 1000);
