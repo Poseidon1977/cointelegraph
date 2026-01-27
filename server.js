@@ -115,133 +115,75 @@ app.get('/api/forex', async (req, res) => {
         const cached = getCachedData(cacheKey);
         if (cached) return res.json(cached);
 
-        // Use Frankfurter API - free, open-source, no API key required
-        const API_URL = 'https://api.frankfurter.app/latest';
+        // Switch to open.er-api.com for 160+ currencies including UAH
+        const API_URL = 'https://open.er-api.com/v6/latest/USD';
 
         try {
             const response = await axios.get(API_URL, { timeout: 8000 });
+            if (response.data.result !== 'success') throw new Error('API reported failure');
+
             const rates = response.data.rates;
-            const base = response.data.base; // Usually EUR
-
-            console.log(`Forex API successful - Base: ${base}, Currencies: ${Object.keys(rates).length}`);
-
-            // Create comprehensive pairs from the rates
             const data = [];
 
-            // Convert all to USD-based pairs
-            const usdRate = rates.USD || 1;
+            // Define which currencies we want inverse pairs for (Popular ones)
+            const popularCurrencies = ['EUR', 'GBP', 'JPY', 'CHF', 'TRY', 'UAH', 'AUD', 'CAD'];
 
-            // Major and Regional currencies (including UAH per user request)
-            const majorCurrencies = ['EUR', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'NZD', 'TRY', 'CNY', 'INR', 'UAH', 'SGD', 'HKD', 'ZAR', 'RUB', 'BRL', 'MXN', 'KRW', 'PLN', 'SEK', 'NOK', 'DKK', 'HUF'];
+            Object.keys(rates).forEach(currency => {
+                if (currency === 'USD') return;
 
-            majorCurrencies.forEach(currency => {
-                const rate = rates[currency];
-                if (rate) {
-                    // USD to currency
-                    const usdToCurrency = rate / usdRate;
-                    data.push({
-                        symbol: `USD/${currency}`,
-                        price: parseFloat(usdToCurrency.toFixed(4)),
-                        change: parseFloat((Math.random() - 0.5).toFixed(2))
-                    });
-                    // Currency to USD
+                // Add USD to Currency
+                data.push({
+                    symbol: `USD/${currency}`,
+                    price: parseFloat(rates[currency].toFixed(4)),
+                    change: parseFloat((Math.random() - 0.5).toFixed(2))
+                });
+
+                // Add Currency to USD for popular ones
+                if (popularCurrencies.includes(currency)) {
                     data.push({
                         symbol: `${currency}/USD`,
-                        price: parseFloat((1 / usdToCurrency).toFixed(4)),
+                        price: parseFloat((1 / rates[currency]).toFixed(4)),
                         change: parseFloat((Math.random() - 0.5).toFixed(2))
                     });
                 }
             });
 
-            // Add ALL other available currencies as USD pairs for global coverage
-            Object.keys(rates).forEach(currency => {
-                if (!majorCurrencies.includes(currency) && currency !== 'USD') {
-                    const usdToCurrency = rates[currency] / usdRate;
-                    data.push({
-                        symbol: `USD/${currency}`,
-                        price: parseFloat(usdToCurrency.toFixed(4)),
-                        change: parseFloat((Math.random() - 0.5).toFixed(2))
-                    });
-                }
+            // Add popular cross pairs (EUR/TRY, EUR/GBP, EUR/UAH, etc.)
+            const baseCurrencies = ['EUR', 'GBP'];
+            const quoteCurrencies = ['TRY', 'UAH', 'JPY', 'CHF', 'GBP'];
+
+            baseCurrencies.forEach(base => {
+                quoteCurrencies.forEach(quote => {
+                    if (base !== quote && rates[base] && rates[quote]) {
+                        const crossRate = rates[quote] / rates[base];
+                        data.push({
+                            symbol: `${base}/${quote}`,
+                            price: parseFloat(crossRate.toFixed(4)),
+                            change: parseFloat((Math.random() - 0.5).toFixed(2))
+                        });
+                    }
+                });
             });
 
-            // Add popular cross pairs
-            const crossPairs = [
-                ['EUR', 'GBP'], ['EUR', 'JPY'], ['EUR', 'TRY'], ['EUR', 'CHF'],
-                ['GBP', 'JPY'], ['GBP', 'TRY'], ['GBP', 'CHF'],
-                ['USD', 'EUR'], ['USD', 'GBP']
-            ];
-
-            crossPairs.forEach(([base, quote]) => {
-                if (rates[base] && rates[quote]) {
-                    const crossRate = rates[quote] / rates[base];
-                    data.push({
-                        symbol: `${base}/${quote}`,
-                        price: parseFloat(crossRate.toFixed(4)),
-                        change: parseFloat((Math.random() - 0.5).toFixed(2))
-                    });
-                }
-            });
-
-            console.log(`Forex data prepared: ${data.length} currency pairs`);
+            console.log(`Forex data updated: ${data.length} pairs including UAH and global currencies`);
             cache.set(cacheKey, { data: data, timestamp: Date.now() });
             res.json(data);
 
         } catch (apiError) {
-            console.error('Frankfurter API error:', apiError.message);
-
-            // Try alternative API: ExchangeRate-API (public endpoint)
-            try {
-                const altResponse = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 5000 });
-                const altRates = altResponse.data.rates;
-
-                console.log('Using fallback API - open.er-api.com');
-
-                const data = [];
-                Object.keys(altRates).forEach(currency => {
-                    if (currency !== 'USD') {
-                        data.push({
-                            symbol: `USD/${currency}`,
-                            price: parseFloat(altRates[currency].toFixed(4)),
-                            change: parseFloat((Math.random() - 0.5).toFixed(2))
-                        });
-                    }
-                });
-
-                // Add major inverse pairs
-                ['EUR', 'GBP', 'JPY', 'TRY'].forEach(curr => {
-                    if (altRates[curr]) {
-                        data.push({
-                            symbol: `${curr}/USD`,
-                            price: parseFloat((1 / altRates[curr]).toFixed(4)),
-                            change: parseFloat((Math.random() - 0.5).toFixed(2))
-                        });
-                    }
-                });
-
-                cache.set(cacheKey, { data: data, timestamp: Date.now() });
-                res.json(data);
-
-            } catch (fallbackError) {
-                console.error('All forex APIs failed, using cached mock data');
-                // Final fallback to essential mock data
-                const fallbackData = [
-                    { symbol: 'EUR/USD', price: 1.0850, change: 0.15 },
-                    { symbol: 'GBP/USD', price: 1.2650, change: -0.23 },
-                    { symbol: 'USD/JPY', price: 149.50, change: 0.45 },
-                    { symbol: 'USD/TRY', price: 32.45, change: -0.12 },
-                    { symbol: 'USD/CHF', price: 0.8750, change: 0.08 },
-                    { symbol: 'AUD/USD', price: 0.6580, change: -0.31 },
-                    { symbol: 'USD/CAD', price: 1.3520, change: 0.22 },
-                    { symbol: 'EUR/TRY', price: 35.20, change: 0.18 },
-                    { symbol: 'GBP/TRY', price: 41.05, change: -0.15 }
-                ];
-                res.json(fallbackData);
-            }
+            console.error('Forex API error:', apiError.message);
+            // Fallback to essential mock data
+            const fallbackData = [
+                { symbol: 'EUR/USD', price: 1.0850, change: 0.15 },
+                { symbol: 'USD/TRY', price: 32.45, change: -0.12 },
+                { symbol: 'USD/UAH', price: 41.20, change: 0.05 },
+                { symbol: 'EUR/TRY', price: 35.20, change: 0.18 },
+                { symbol: 'EUR/UAH', price: 44.70, change: 0.10 }
+            ];
+            res.json(fallbackData);
         }
     } catch (e) {
-        console.error('Forex endpoint error:', e.message);
-        res.status(500).json({ error: 'Failed to fetch forex data', details: e.message });
+        console.error('Forex endpoint fatal error:', e.message);
+        res.status(500).json({ error: 'Failed to fetch forex data' });
     }
 });
 
