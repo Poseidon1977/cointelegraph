@@ -142,7 +142,19 @@ function startDataCycles() {
     }, 30000); // Update every 30s for real-time forex rates
 }
 
-function fetchCurrentViewData() {
+function fetchCurrentViewData(forceFetch = false) {
+    // Show cached data immediately if available
+    const cachedData = localStorage.getItem(`cache_${currentView}`);
+    if (cachedData) {
+        try {
+            const parsed = JSON.parse(cachedData);
+            // Render cached data first for instant feedback
+            renderCachedView(currentView, parsed);
+        } catch (e) {
+            console.error('Cache parse error', e);
+        }
+    }
+
     switch (currentView) {
         case 'dashboard': fetchCrypto(); break;
         case 'stocks': fetchStocks(); break;
@@ -150,6 +162,44 @@ function fetchCurrentViewData() {
         case 'forex': fetchForex(); break;
         case 'news': fetchNews(); break;
     }
+}
+
+function renderCachedView(view, data) {
+    const gridIds = {
+        'dashboard': 'crypto-grid',
+        'stocks': 'stocks-grid',
+        'commodities': 'commodities-grid',
+        'forex': 'forex-grid'
+    };
+    const grid = document.getElementById(gridIds[view]);
+    if (!grid || !data) return;
+
+    if (view === 'dashboard') {
+        renderGrid(grid, data.map(coin => ({
+            name: `${getCryptoIcon(coin.symbol, coin.image)} ${coin.name}`,
+            symbol: coin.symbol.toUpperCase(),
+            price: coin.current_price ? `$${coin.current_price.toLocaleString()}` : 'N/A',
+            change: coin.price_change_percentage_24h || 0,
+            id: coin.id
+        })));
+    } else if (view === 'stocks') {
+        renderGrid(grid, data.map(stock => ({
+            name: `${getStockIcon(stock.symbol)} ${stock.symbol}`,
+            symbol: stock.symbol,
+            price: stock.price ? `$${Number(stock.price).toFixed(2)}` : 'N/A',
+            change: stock.change || 0,
+            id: stock.symbol
+        })));
+    } else if (view === 'forex') {
+        renderGrid(grid, data.map(f => ({
+            name: `${getPairFlags(f.symbol)} ${f.symbol}`,
+            symbol: f.symbol,
+            price: f.price ? Number(f.price).toFixed(4) : 'N/A',
+            change: f.change || 0,
+            id: f.symbol
+        })));
+    }
+    // Commodities has a more complex rendering, so we fetch it live or implement a simplified cached version
 }
 
 async function fetchCrypto() {
@@ -160,6 +210,8 @@ async function fetchCrypto() {
         const ids = config.crypto.map(c => c.id).join(',');
         const res = await fetch(`/api/crypto/markets?ids=${ids}`);
         const data = await res.json();
+
+        localStorage.setItem('cache_dashboard', JSON.stringify(data));
 
         renderGrid(grid, data.map(coin => ({
             name: `${getCryptoIcon(coin.symbol, coin.image)} ${coin.name}`,
@@ -182,6 +234,8 @@ async function fetchStocks() {
         const res = await fetch(`/api/stocks?symbols=${config.stocks.join(',')}`);
         const data = await res.json();
 
+        localStorage.setItem('cache_stocks', JSON.stringify(data));
+
         renderGrid(grid, data.map(stock => ({
             name: `${getStockIcon(stock.symbol)} ${stock.symbol}`,
             symbol: stock.symbol,
@@ -201,6 +255,8 @@ async function fetchCommodities() {
     try {
         const res = await fetch('/api/commodities');
         const data = await res.json();
+
+        localStorage.setItem('cache_commodities', JSON.stringify(data));
 
         if (!data || data.length === 0) {
             grid.innerHTML = '<div class="loading">No commodities data available</div>';
@@ -330,6 +386,8 @@ async function fetchForex() {
     try {
         const res = await fetch('/api/forex');
         const data = await res.json();
+
+        localStorage.setItem('cache_forex', JSON.stringify(data));
 
         // Render all pairs sent by the server (server now handles filtering)
         renderGrid(grid, data.map(f => ({

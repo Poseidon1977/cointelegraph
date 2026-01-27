@@ -70,32 +70,41 @@ app.get('/api/crypto/markets', async (req, res) => {
 
 app.get('/api/stocks', async (req, res) => {
     try {
-        const { symbols } = req.query; // Expecting comma separated symbols
+        const { symbols } = req.query;
         const symbolsList = symbols ? symbols.split(',') : ['AAPL', 'TSLA', 'AMZN', 'MSFT', 'GOOGL', 'NVDA', 'META', 'BRK.B'];
 
-        const results = [];
-        for (const symbol of symbolsList) {
-            try {
-                const response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`, { timeout: 2000 });
-                results.push({
+        const cacheKey = `stocks_${symbolsList.sort().join('_')}`;
+        const cached = getCachedData(cacheKey);
+        if (cached) return res.json(cached);
+
+        // Fetch in parallel with a timeout
+        const promises = symbolsList.map(symbol =>
+            axios.get(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`, { timeout: 3000 })
+                .then(r => ({
                     symbol: symbol,
-                    price: response.data.c || 0,
-                    change: response.data.dp || 0,
-                    high: response.data.h || 0,
-                    low: response.data.l || 0,
-                    open: response.data.o || 0
-                });
-                // Small delay to avoid burst rate limits if list is long
-                if (symbolsList.length > 10) await new Promise(r => setTimeout(r, 50));
-            } catch (err) {
-                console.error(`Error fetching ${symbol}:`, err.message);
-                // Push placeholder or skip
-            }
+                    price: r.data.c || 0,
+                    change: r.data.dp || 0,
+                    high: r.data.h || 0,
+                    low: r.data.l || 0,
+                    open: r.data.o || 0
+                }))
+                .catch(err => {
+                    console.error(`Error fetching ${symbol}:`, err.message);
+                    return { symbol, price: 0, change: 0, error: true };
+                })
+        );
+
+        const results = await Promise.all(promises);
+
+        // Only cache if we got some valid results
+        if (results.some(r => !r.error)) {
+            cache.set(cacheKey, { data: results, timestamp: Date.now() });
         }
+
         res.json(results);
     } catch (e) {
-        console.error('Stocks error:', e.response ? e.response.data : e.message);
-        res.status(500).json({ error: 'Failed to fetch stock data', details: e.message });
+        console.error('Stocks fatal error:', e.message);
+        res.status(500).json({ error: 'Failed to fetch stock data' });
     }
 });
 
