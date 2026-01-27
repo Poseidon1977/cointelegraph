@@ -221,6 +221,25 @@ body {
     animation: fadeIn 0.3s ease;
 }
 
+.settings-card {
+    max-width: 500px;
+    margin: 20px auto;
+}
+
+.setting-item {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.setting-item label {
+    display: block;
+    margin-bottom: 8px;
+    color: #888;
+    font-size: 0.9rem;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
