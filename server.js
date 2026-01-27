@@ -107,8 +107,8 @@ app.get('/api/forex', async (req, res) => {
             // Convert all to USD-based pairs
             const usdRate = rates.USD || 1;
 
-            // Major currencies (including UAH per user request)
-            const majorCurrencies = ['EUR', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'NZD', 'TRY', 'CNY', 'INR', 'UAH'];
+            // Major and Regional currencies (including UAH per user request)
+            const majorCurrencies = ['EUR', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'NZD', 'TRY', 'CNY', 'INR', 'UAH', 'SGD', 'HKD', 'ZAR', 'RUB', 'BRL', 'MXN', 'KRW', 'PLN', 'SEK', 'NOK', 'DKK', 'HUF'];
 
             majorCurrencies.forEach(currency => {
                 const rate = rates[currency];
@@ -129,7 +129,7 @@ app.get('/api/forex', async (req, res) => {
                 }
             });
 
-            // Add all other available currencies as USD pairs
+            // Add ALL other available currencies as USD pairs for global coverage
             Object.keys(rates).forEach(currency => {
                 if (!majorCurrencies.includes(currency) && currency !== 'USD') {
                     const usdToCurrency = rates[currency] / usdRate;
@@ -231,27 +231,39 @@ app.get('/api/commodities', async (req, res) => {
         const GRAMS_PER_OUNCE = 31.1035;
 
         // Get current forex rates for TRY and UAH conversions
-        let usdToTry = 32.45; // Fallback
-        let usdToUah = 37.50; // Fallback
+        let usdToTry = 43.50; // Fallback (updated realistic rate)
+        let usdToUah = 41.00; // Fallback
 
         try {
-            const forexResponse = await axios.get('https://api.frankfurter.app/latest', { timeout: 3000 });
+            const forexResponse = await axios.get('https://api.frankfurter.app/latest?base=USD', { timeout: 3000 });
             const rates = forexResponse.data.rates;
-            const usdRate = rates.USD || 1;
-            if (rates.TRY) usdToTry = rates.TRY / usdRate;
-            if (rates.UAH) usdToUah = rates.UAH / usdRate;
+
+            // Frankfurter doesn't have TRY/UAH, try alternative API
+            if (!rates.TRY || !rates.UAH) { // Modified condition to check for both TRY and UAH
+                const altResponse = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 3000 });
+                const altRates = altResponse.data.rates;
+                if (altRates.TRY) usdToTry = altRates.TRY;
+                if (altRates.UAH) usdToUah = altRates.UAH;
+                console.log(`Commodities using alt forex: USD/TRY=${usdToTry}, USD/UAH=${usdToUah}`);
+            } else {
+                if (rates.TRY) usdToTry = rates.TRY;
+                if (rates.UAH) usdToUah = rates.UAH;
+                console.log(`Commodities using Frankfurter: USD/TRY=${usdToTry}, USD/UAH=${usdToUah}`);
+            }
         } catch (e) {
-            console.log('Using fallback forex rates for commodities');
+            console.log(`Using fallback forex rates for commodities: USD/TRY=${usdToTry}, USD/UAH=${usdToUah}`);
         }
 
         // Base prices with small random variation
         const commodities = {
+            // Gold - Special Category (updated to current market price ~$5000/oz for 2026)
+            'Gold': { basePrice: 5000, unit: 'oz', variation: 50, category: 'gold' },
+
             // Precious Metals (per ounce)
-            'Gold': { basePrice: 2040, unit: 'oz', variation: 40, category: 'metal' },
-            'Silver': { basePrice: 24.5, unit: 'oz', variation: 1, category: 'metal' },
-            'Platinum': { basePrice: 920, unit: 'oz', variation: 20, category: 'metal' },
-            'Palladium': { basePrice: 980, unit: 'oz', variation: 30, category: 'metal' },
-            'Copper': { basePrice: 8350, unit: 'ton', variation: 150, category: 'metal' },
+            'Silver': { basePrice: 29.5, unit: 'oz', variation: 1, category: 'metal' },
+            'Platinum': { basePrice: 950, unit: 'oz', variation: 20, category: 'metal' },
+            'Palladium': { basePrice: 1020, unit: 'oz', variation: 30, category: 'metal' },
+            'Copper': { basePrice: 8500, unit: 'ton', variation: 150, category: 'metal' },
 
             // Energy
             'Crude Oil (WTI)': { basePrice: 78.50, unit: 'barrel', variation: 2, category: 'energy' },
@@ -290,7 +302,7 @@ app.get('/api/commodities', async (req, res) => {
             };
 
             // Add per gram calculation and currency conversions for precious metals
-            if (info.category === 'metal' && info.unit === 'oz') {
+            if ((info.category === 'metal' || info.category === 'gold') && info.unit === 'oz') {
                 result.pricePerGram = parseFloat((price / GRAMS_PER_OUNCE).toFixed(2));
 
                 // For Gold specifically, add TRY and UAH prices

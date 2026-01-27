@@ -242,7 +242,7 @@ body {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 12px;
-    padding: 12px;
+    padding: 14px;
     position: relative;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -730,6 +730,21 @@ body {
     -webkit-appearance: none;
 }
 
+/* Crypto Card Styles */
+.crypto-card {
+    background: rgba(30, 30, 30, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 14px 16px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
 .swap-btn {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -941,5 +956,109 @@ body {
 
     .date-display {
         align-items: center;
+    }
+}
+
+/* Gold Hero Card Styles */
+.gold-hero-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+    grid-column: 1 / -1;
+}
+
+.gold-hero-card {
+    background: linear-gradient(135deg, rgba(40, 40, 40, 0.8) 0%, rgba(20, 20, 20, 0.9) 100%);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 20px;
+    padding: 25px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+}
+
+.gold-hero-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(255, 215, 0, 0.6);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+.gold-hero-container .gold-hero-card:nth-child(2) {
+    border-color: rgba(0, 229, 255, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 229, 255, 0.1);
+}
+
+.gold-hero-container .gold-hero-card:nth-child(2):hover {
+    border-color: rgba(0, 229, 255, 0.6);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 229, 255, 0.2);
+}
+
+.gold-hero-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.gold-label {
+    font-size: 0.9rem;
+    color: #ffd700;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gold-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 5px;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+.gold-sub-value {
+    font-size: 1rem;
+    color: #a0a0a0;
+    font-family: monospace;
+}
+
+.gold-icon-large {
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+    font-size: 8rem;
+    opacity: 0.1;
+    transform: rotate(-15deg);
+    pointer-events: none;
+}
+
+/* Emoji Styling */
+.emoji-colored {
+    display: inline-block;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+    transition: transform 0.2s;
+}
+
+.nav-item:hover .emoji-colored,
+.crypto-card:hover .emoji-colored,
+.gold-hero-card:hover .emoji-colored {
+    transform: scale(1.2);
+}
+
+@media (max-width: 768px) {
+    .gold-hero-container {
+        grid-template-columns: 1fr;
     }
 }

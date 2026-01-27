@@ -110,7 +110,7 @@ async function fetchCrypto() {
         const data = await res.json();
 
         renderGrid(grid, data.map(coin => ({
-            name: coin.name,
+            name: `<span class="emoji-colored">${getCryptoIcon(coin.symbol)}</span> ${coin.name}`,
             symbol: coin.symbol.toUpperCase(),
             price: coin.current_price ? `$${coin.current_price.toLocaleString()}` : 'N/A',
             change: coin.price_change_percentage_24h || 0,
@@ -130,12 +130,12 @@ async function fetchStocks() {
         const res = await fetch(`/api/stocks?symbols=${config.stocks.join(',')}`);
         const data = await res.json();
 
-        renderGrid(grid, data.map(s => ({
-            name: s.symbol,
-            symbol: s.symbol,
-            price: `$${s.price.toFixed(2)}`,
-            change: s.change,
-            id: s.symbol
+        renderGrid(grid, data.map(stock => ({
+            name: `<span class="emoji-colored">${getStockIcon(stock.symbol)}</span> ${stock.symbol}`,
+            symbol: stock.symbol,
+            price: `$${stock.price.toFixed(2)}`,
+            change: stock.change,
+            id: stock.symbol
         })));
     } catch (e) {
         console.error('Stocks error', e);
@@ -164,17 +164,58 @@ async function fetchCommodities() {
             grouped[item.category].push(item);
         });
 
-        // Display each category
-        Object.entries(grouped).forEach(([category, items]) => {
+        // Define category display order (gold first)
+        const categoryOrder = ['gold', 'metal', 'energy', 'agriculture', 'livestock'];
+        const categoryTitles = {
+            'gold': '🥇 Altın / Gold',
+            'metal': 'Precious Metals',
+            'energy': 'Energy',
+            'agriculture': 'Agriculture',
+            'livestock': 'Livestock'
+        };
+
+        // Display each category in order
+        categoryOrder.forEach(category => {
+            if (!grouped[category]) return;
+
+            const items = grouped[category];
             const categoryHeader = document.createElement('div');
             categoryHeader.style.gridColumn = '1 / -1';
-            categoryHeader.style.fontSize = '1.1rem';
+            categoryHeader.style.fontSize = category === 'gold' ? '1.3rem' : '1.1rem';
             categoryHeader.style.fontWeight = 'bold';
-            categoryHeader.style.color = '#00e5ff';
-            categoryHeader.style.marginTop = '20px';
+            categoryHeader.style.color = category === 'gold' ? '#ffd700' : '#00e5ff';
+            categoryHeader.style.marginTop = category === 'gold' ? '10px' : '20px';
             categoryHeader.style.marginBottom = '10px';
-            categoryHeader.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+            categoryHeader.style.textShadow = category === 'gold' ? '0 0 10px rgba(255, 215, 0, 0.5)' : 'none';
+            categoryHeader.textContent = categoryTitles[category] || category.charAt(0).toUpperCase() + category.slice(1);
             grid.appendChild(categoryHeader);
+
+            if (category === 'gold') {
+                const heroContainer = document.createElement('div');
+                heroContainer.className = 'gold-hero-container';
+                grid.appendChild(heroContainer);
+
+                items.forEach(item => {
+                    const heroCard = document.createElement('div');
+                    heroCard.className = 'gold-hero-card';
+
+                    const icon = getCommodityIcon(item.name);
+
+                    heroCard.innerHTML = `
+                        <div class="gold-icon-large">${icon}</div>
+                        <div class="gold-label">
+                            <span class="emoji-colored">${icon}</span> ${item.name} / GRAM
+                        </div>
+                        <div class="gold-value">₺${item.pricePerGramTRY?.toLocaleString('tr-TR')}</div>
+                        <div class="gold-sub-value">≈ $${item.pricePerGram?.toFixed(2)} / ₴${item.pricePerGramUAH?.toLocaleString('uk-UA')}</div>
+                        <div style="margin-top: 15px; font-size: 0.85rem; color: #888;">
+                            ONS FIYATI: <span style="color: #ffd700; font-weight: bold;">$${item.price.toLocaleString()}</span>
+                        </div>
+                    `;
+                    heroContainer.appendChild(heroCard);
+                });
+                return;
+            }
 
             items.forEach(item => {
                 const card = document.createElement('div');
@@ -186,27 +227,15 @@ async function fetchCommodities() {
                     ? `$${item.pricePerGram}/g`
                     : `$${item.price}/${item.unit}`;
 
-                // Special display for Gold with TRY and UAH prices
-                let extraInfo = '';
-                if (item.name === 'Gold' && item.priceInTRY) {
-                    extraInfo = `
-                        <div style="font-size: 0.7rem; color: #aaa; margin-top: 4px; border-top: 1px solid #333; padding-top: 4px;">
-                            <div>🇹🇷 ₺${item.pricePerGramTRY}/g  •  ₺${item.priceInTRY}/oz</div>
-                            <div>🇺🇦 ₴${item.pricePerGramUAH}/g  •  ₴${item.priceInUAH}/oz</div>
-                        </div>
-                    `;
-                }
-
                 card.innerHTML = `
                     <div class="card-header">
-                        <span class="coin-name" style="font-size: 0.85rem">${icon} ${item.name}</span>
+                        <span class="coin-name" style="font-size: 0.85rem"><span class="emoji-colored">${icon}</span> ${item.name}</span>
                         <span class="change-badge ${isUp ? 'change-up' : 'change-down'}">${isUp ? '▲' : '▼'} ${Math.abs(item.change || 0).toFixed(2)}%</span>
                     </div>
                     <div class="price-row">
                         <div class="coin-price" style="font-size: 1rem">${priceDisplay}</div>
                         <div class="coin-symbol" style="font-size: 0.65rem; color: #888">${item.symbol}</div>
                     </div>
-                    ${extraInfo}
                 `;
                 grid.appendChild(card);
             });
@@ -227,7 +256,7 @@ async function fetchForex() {
         const data = await res.json();
 
         renderGrid(grid, data.map(f => ({
-            name: `${getPairFlags(f.symbol)} ${f.symbol}`,
+            name: `<span class="emoji-colored">${getPairFlags(f.symbol)}</span> ${f.symbol}`,
             symbol: f.symbol,
             price: f.price.toFixed(4),
             change: f.change,
