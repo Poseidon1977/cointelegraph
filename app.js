@@ -19,9 +19,29 @@ const config = {
         { id: 'tron', name: 'Tron', symbol: 'TRX' },
         { id: 'near', name: 'NEAR Protocol', symbol: 'NEAR' },
         { id: 'aptos', name: 'Aptos', symbol: 'APT' },
-        { id: 'internet-computer', name: 'Internet Computer', symbol: 'ICP' }
+        { id: 'internet-computer', name: 'Internet Computer', symbol: 'ICP' },
+        { id: 'stellar', name: 'Stellar', symbol: 'XLM' },
+        { id: 'monero', name: 'Monero', symbol: 'XMR' },
+        { id: 'eos', name: 'EOS', symbol: 'EOS' },
+        { id: 'vechain', name: 'VeChain', symbol: 'VET' },
+        { id: 'algorand', name: 'Algorand', symbol: 'ALGO' },
+        { id: 'tezos', name: 'Tezos', symbol: 'XTZ' },
+        { id: 'theta-token', name: 'Theta', symbol: 'THETA' },
+        { id: 'filecoin', name: 'Filecoin', symbol: 'FIL' },
+        { id: 'hedera-hashgraph', name: 'Hedera', symbol: 'HBAR' },
+        { id: 'elrond-erd-2', name: 'MultiversX', symbol: 'EGLD' },
+        { id: 'fantom', name: 'Fantom', symbol: 'FTM' },
+        { id: 'the-sandbox', name: 'Sandbox', symbol: 'SAND' },
+        { id: 'decentraland', name: 'Decentraland', symbol: 'MANA' },
+        { id: 'axie-infinity', name: 'Axie Infinity', symbol: 'AXS' },
+        { id: 'enjincoin', name: 'Enjin', symbol: 'ENJ' },
+        { id: 'chiliz', name: 'Chiliz', symbol: 'CHZ' },
+        { id: 'flow', name: 'Flow', symbol: 'FLOW' },
+        { id: 'aave', name: 'Aave', symbol: 'AAVE' },
+        { id: 'maker', name: 'Maker', symbol: 'MKR' },
+        { id: 'compound-governance-token', name: 'Compound', symbol: 'COMP' }
     ],
-    stocks: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC', 'BABA', 'JPM', 'V', 'WMT', 'DIS'],
+    stocks: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC', 'BABA', 'JPM', 'V', 'WMT', 'DIS', 'COIN', 'SQ', 'PYPL', 'SHOP', 'UBER', 'ROKU', 'SNAP', 'TWTR', 'SPOT', 'ZM'],
     commodities: ['GOLD', 'SILVER'], // Will fetch real precious metals prices
 };
 
@@ -110,7 +130,7 @@ async function fetchCrypto() {
         const data = await res.json();
 
         renderGrid(grid, data.map(coin => ({
-            name: `<span class="emoji-colored">${getCryptoIcon(coin.symbol)}</span> ${coin.name}`,
+            name: `${getCryptoIcon(coin.symbol)} ${coin.name}`,
             symbol: coin.symbol.toUpperCase(),
             price: coin.current_price ? `$${coin.current_price.toLocaleString()}` : 'N/A',
             change: coin.price_change_percentage_24h || 0,
@@ -131,7 +151,7 @@ async function fetchStocks() {
         const data = await res.json();
 
         renderGrid(grid, data.map(stock => ({
-            name: `<span class="emoji-colored">${getStockIcon(stock.symbol)}</span> ${stock.symbol}`,
+            name: `${getStockIcon(stock.symbol)} ${stock.symbol}`,
             symbol: stock.symbol,
             price: `$${stock.price.toFixed(2)}`,
             change: stock.change,
@@ -196,23 +216,49 @@ async function fetchCommodities() {
                 grid.appendChild(heroContainer);
 
                 items.forEach(item => {
-                    const heroCard = document.createElement('div');
-                    heroCard.className = 'gold-hero-card';
-
                     const icon = getCommodityIcon(item.name);
 
-                    heroCard.innerHTML = `
+                    // 1. USD Card (Global)
+                    const cardUSD = document.createElement('div');
+                    cardUSD.className = 'gold-hero-card';
+                    cardUSD.innerHTML = `
                         <div class="gold-icon-large">${icon}</div>
                         <div class="gold-label">
-                            <span class="emoji-colored">${icon}</span> ${item.name} / GRAM
+                            <span class="emoji-colored">🇺🇸</span> GOLD / USD
                         </div>
-                        <div class="gold-value">₺${item.pricePerGramTRY?.toLocaleString('tr-TR')}</div>
-                        <div class="gold-sub-value">≈ $${item.pricePerGram?.toFixed(2)} / ₴${item.pricePerGramUAH?.toLocaleString('uk-UA')}</div>
-                        <div style="margin-top: 15px; font-size: 0.85rem; color: #888;">
-                            ONS FIYATI: <span style="color: #ffd700; font-weight: bold;">$${item.price.toLocaleString()}</span>
-                        </div>
+                        <div class="gold-value">$${item.price.toLocaleString()}</div>
+                        <div class="gold-sub-value">GRAM: $${item.pricePerGram?.toFixed(2)}</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-top: 10px;">GLOBAL MARKET</div>
                     `;
-                    heroContainer.appendChild(heroCard);
+                    heroContainer.appendChild(cardUSD);
+
+                    // 2. TRY Card (Turkey)
+                    const cardTRY = document.createElement('div');
+                    cardTRY.className = 'gold-hero-card';
+                    cardTRY.style.borderColor = 'rgba(255, 61, 0, 0.3)'; // Reddish border for differentiation
+                    cardTRY.innerHTML = `
+                        <div class="gold-icon-large" style="color: #ff3d00">${icon}</div>
+                        <div class="gold-label">
+                            <span class="emoji-colored">🇹🇷</span> GRAM ALTIN
+                        </div>
+                        <div class="gold-value" style="color: #ff9e80">₺${item.pricePerGramTRY?.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</div>
+                        <div class="gold-sub-value">Fiyat (TRY)</div>
+                    `;
+                    heroContainer.appendChild(cardTRY);
+
+                    // 3. UAH Card (Ukraine)
+                    const cardUAH = document.createElement('div');
+                    cardUAH.className = 'gold-hero-card';
+                    cardUAH.style.borderColor = 'rgba(0, 229, 255, 0.3)'; // Blue border for differentiation
+                    cardUAH.innerHTML = `
+                        <div class="gold-icon-large" style="color: #00e5ff">${icon}</div>
+                        <div class="gold-label">
+                            <span class="emoji-colored">🇺🇦</span> UAH GOLD
+                        </div>
+                        <div class="gold-value" style="color: #80d8ff">₴${item.pricePerGramUAH?.toLocaleString('uk-UA', { maximumFractionDigits: 0 })}</div>
+                        <div class="gold-sub-value">Price (UAH)</div>
+                    `;
+                    heroContainer.appendChild(cardUAH);
                 });
                 return;
             }
@@ -239,7 +285,6 @@ async function fetchCommodities() {
                 `;
                 grid.appendChild(card);
             });
-        });
     } catch (e) {
         console.error('Commodities error', e);
         grid.innerHTML = '<div class="loading" style="color: #ff3d00">Failed to load commodities</div>';
@@ -255,8 +300,27 @@ async function fetchForex() {
         const res = await fetch('/api/forex');
         const data = await res.json();
 
-        renderGrid(grid, data.map(f => ({
-            name: `<span class="emoji-colored">${getPairFlags(f.symbol)}</span> ${f.symbol}`,
+        // Filter to show only major currency pairs in one direction
+        // Show: USD/TRY, EUR/TRY, USD/UAH, EUR/UAH, GBP/TRY etc.
+        // Hide: TRY/USD, TRY/EUR, UAH/USD, UAH/EUR etc.
+        const majorCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'CHF'];
+        const targetCurrencies = ['TRY', 'UAH']; // Currencies we want to see against majors
+        const filteredData = data.filter(f => {
+            const [cur1, cur2] = f.symbol.split('/');
+            // Show if: major/target (USD/TRY, EUR/UAH) OR major/other (not reverse)
+            if (majorCurrencies.includes(cur1)) {
+                return true; // Show all pairs starting with major currencies
+            }
+            // Hide if: target/major (TRY/USD, UAH/EUR)
+            if (targetCurrencies.includes(cur1) && majorCurrencies.includes(cur2)) {
+                return false;
+            }
+            // Show other pairs
+            return !majorCurrencies.includes(cur2);
+        });
+
+        renderGrid(grid, filteredData.map(f => ({
+            name: `${getPairFlags(f.symbol)} ${f.symbol}`,
             symbol: f.symbol,
             price: f.price.toFixed(4),
             change: f.change,
@@ -472,3 +536,8 @@ document.getElementById('conv-swap')?.addEventListener('click', () => {
     t.value = temp;
     fetchForex();
 });
+
+
+
+
+
