@@ -50,8 +50,19 @@ const config = {
         { id: 'bonk', name: 'Bonk', symbol: 'BONK' },
         { id: 'floki', name: 'Floki Inu', symbol: 'FLOKI' }
     ],
-    stocks: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC', 'BABA', 'JPM', 'V', 'WMT', 'DIS', 'COIN', 'SQ', 'PYPL', 'SHOP', 'UBER', 'ROKU', 'SNAP', 'TWTR', 'SPOT', 'ZM'],
-    commodities: ['GOLD', 'SILVER'], // Will fetch real precious metals prices
+    stocks: [
+        'AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC',
+        'BABA', 'JPM', 'V', 'WMT', 'DIS', 'COIN', 'SQ', 'PYPL', 'SHOP', 'UBER',
+        'ROKU', 'SNAP', 'SPOT', 'ZM', 'ADBE', 'CRM', 'AMD', 'ORCL', 'CSCO', 'AVGO',
+        'QCOM', 'TXN', 'INTU', 'AMAT', 'MU', 'LRCX', 'ADI', 'PANW', 'SNPS', 'CDNS',
+        'ABNB', 'Airbnb', 'DASH', 'DoorDash', 'PINS', 'Pinterest', 'PLTR', 'Palantir'
+    ],
+    commodities: [
+        'GOLD', 'SILVER', 'PLATINUM', 'PALLADIUM', 'COPPER',
+        'CRUDE OIL (WTI)', 'BRENT OIL', 'NATURAL GAS', 'HEATING OIL', 'GASOLINE',
+        'WHEAT', 'CORN', 'SOYBEANS', 'COFFEE', 'SUGAR', 'COTTON', 'COCOA', 'RICE',
+        'LIVE CATTLE', 'LEAN HOGS'
+    ],
 };
 
 let currentView = 'dashboard';
@@ -64,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
     initClock();
     startDataCycles();
+    setupSearch();
 
     // Setup Language Selector
     const langSelect = document.getElementById('lang-select');
@@ -538,7 +550,81 @@ document.getElementById('conv-swap')?.addEventListener('click', () => {
     fetchForex();
 });
 
+function setupSearch() {
+    const searchInput = document.getElementById('global-search');
+    const results = document.getElementById('search-results');
 
+    if (!searchInput || !results) return;
+
+    searchInput.addEventListener('input', debounce((e) => {
+        const query = e.target.value.trim().toLowerCase();
+        if (query.length < 2) {
+            results.classList.add('hidden');
+            return;
+        }
+
+        // Search in all categories
+        const matches = [];
+
+        // Crypto
+        config.crypto.forEach(c => {
+            if (c.name.toLowerCase().includes(query) || c.symbol.toLowerCase().includes(query)) {
+                matches.push({ type: 'crypto', ...c });
+            }
+        });
+
+        // Stocks
+        config.stocks.forEach(s => {
+            if (s.toLowerCase().includes(query)) {
+                matches.push({ type: 'stock', name: s, symbol: s });
+            }
+        });
+
+        // Commodities
+        config.commodities.forEach(c => {
+            if (c.toLowerCase().includes(query)) {
+                matches.push({ type: 'commodity', name: c, symbol: c });
+            }
+        });
+
+        if (matches.length > 0) {
+            results.innerHTML = matches.slice(0, 10).map(m => `
+                <div class="search-item" onclick="handleSearchClick('${m.type}', '${m.id || m.symbol}')">
+                    <span class="search-type">${m.type.toUpperCase()}</span>
+                    <span class="search-name">${m.name}</span>
+                    <span class="search-symbol">${m.symbol}</span>
+                </div>
+            `).join('');
+            results.classList.remove('hidden');
+        } else {
+            results.innerHTML = '<div class="search-no-results">No matches found</div>';
+            results.classList.remove('hidden');
+        }
+    }, 300));
+
+    // Hide search results when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !results.contains(e.target)) {
+            results.classList.add('hidden');
+        }
+    });
+}
+
+function handleSearchClick(type, id) {
+    document.getElementById('search-results').classList.add('hidden');
+    document.getElementById('global-search').value = '';
+
+    // If it's crypto and we are on dashboard, scroll to it or just show info
+    // For now, let's just toast
+    showToast(`Viewing ${id}...`);
+
+    // Navigate to the correct view
+    const navMap = { 'crypto': 'dashboard', 'stock': 'stocks', 'commodity': 'commodities' };
+    const targetNav = navMap[type];
+    if (targetNav) {
+        document.querySelector(`.nav-item[data-target="${targetNav}"]`)?.click();
+    }
+}
 
 
 
