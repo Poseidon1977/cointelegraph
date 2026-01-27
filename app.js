@@ -15,7 +15,7 @@ const config = {
     stocks: [
         'AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC',
         'KO', 'MCD', 'DIS', 'V', 'JPM', 'WMT', 'PG', 'NKE', 'ORCL', 'CRM', 'ADBE',
-        'PYPL', 'SHOP', 'UBER', 'ABNB', 'COIN', 'MSTR', 'AMD', 'QCOM', 'TXN'
+        'PYPL', 'SHOP', 'UBER', 'ABNB', 'COIN', 'MSTR', 'QCOM', 'TXN'
     ],
     refreshInterval: 30000 // 30 seconds
 };
@@ -103,26 +103,37 @@ function setupSearch() {
         // Aggregate all searchable assets
         const results = [];
 
-        // 1. Search Cryptos
-        if (State.data['dashboard']) {
-            State.data['dashboard'].forEach(coin => {
-                if (coin.name.toLowerCase().includes(query) || coin.symbol.toLowerCase().includes(query)) {
-                    results.push({ type: 'dashboard', data: coin, name: coin.name, symbol: coin.symbol, icon: getCryptoIcon(coin.symbol, coin.image) });
-                }
-            });
-        }
+        // 1. Search Cryptos (Config + Data)
+        config.crypto.forEach(symbol => {
+            const coinData = State.data['dashboard']?.find(c => c.id === symbol || c.symbol === symbol);
+            const name = coinData ? coinData.name : symbol.charAt(0).toUpperCase() + symbol.slice(1);
+            if (name.toLowerCase().includes(query) || symbol.toLowerCase().includes(query)) {
+                results.push({
+                    type: 'dashboard',
+                    data: coinData || { id: symbol, symbol: symbol },
+                    name: name,
+                    symbol: symbol,
+                    icon: getCryptoIcon(symbol, coinData?.image)
+                });
+            }
+        });
 
-        // 2. Search Stocks
-        if (State.data['stocks']) {
-            State.data['stocks'].forEach(stock => {
-                const stockName = getStockName(stock.symbol);
-                if (stockName.toLowerCase().includes(query) || stock.symbol.toLowerCase().includes(query)) {
-                    results.push({ type: 'stocks', data: stock, name: stockName, symbol: stock.symbol, icon: getStockIcon(stock.symbol) });
-                }
-            });
-        }
+        // 2. Search Stocks (Config + Data)
+        config.stocks.forEach(symbol => {
+            const stockData = State.data['stocks']?.find(s => s.symbol === symbol);
+            const name = getStockName(symbol);
+            if (name.toLowerCase().includes(query) || symbol.toLowerCase().includes(query)) {
+                results.push({
+                    type: 'stocks',
+                    data: stockData || { symbol: symbol },
+                    name: name,
+                    symbol: symbol,
+                    icon: getStockIcon(symbol)
+                });
+            }
+        });
 
-        // 3. Search Commodities
+        // 3. Search Commodities (Data only as they are dynamic)
         if (State.data['commodities']) {
             State.data['commodities'].forEach(item => {
                 const translatedName = t(item.name);
