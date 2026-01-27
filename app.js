@@ -129,7 +129,7 @@ async function fetchCrypto() {
         const data = await res.json();
 
         renderGrid(grid, data.map(coin => ({
-            name: `${getCryptoIcon(coin.symbol)} ${coin.name}`,
+            name: `${getCryptoIcon(coin.symbol, coin.image)} ${coin.name}`,
             symbol: coin.symbol.toUpperCase(),
             price: coin.current_price ? `$${coin.current_price.toLocaleString()}` : 'N/A',
             change: coin.price_change_percentage_24h || 0,

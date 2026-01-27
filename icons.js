@@ -101,8 +101,8 @@ function getPairFlagsHtml(pairSymbol) {
 // NEW FUNCTIONS - Return HTML img tags instead of emojis
 
 // Get Crypto Icon as HTML img tag
-function getCryptoIcon(symbol) {
-    const url = getCryptoLogoUrl(symbol);
+function getCryptoIcon(symbol, overrideUrl) {
+    const url = overrideUrl || getCryptoLogoUrl(symbol);
     return `<img src="${url}" class="coin-logo" alt="${symbol}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1213/1213079.png'">`;
 }
 
