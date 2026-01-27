@@ -131,38 +131,34 @@ app.get('/api/forex', async (req, res) => {
             Object.keys(rates).forEach(currency => {
                 if (currency === 'USD') return;
 
-                // Add USD to Currency
+                // Add USD to Currency (One way only: USD/XXX)
                 data.push({
                     symbol: `USD/${currency}`,
                     price: parseFloat(rates[currency].toFixed(4)),
                     change: parseFloat((Math.random() - 0.5).toFixed(2))
                 });
+            });
 
-                // Add Currency to USD for popular ones
-                if (popularCurrencies.includes(currency)) {
+            // Add specific major cross pairs (Only one direction)
+            const crosses = [
+                { base: 'EUR', quote: 'GBP' },
+                { base: 'EUR', quote: 'JPY' },
+                { base: 'EUR', quote: 'CHF' },
+                { base: 'EUR', quote: 'TRY' },
+                { base: 'EUR', quote: 'UAH' },
+                { base: 'GBP', quote: 'JPY' },
+                { base: 'GBP', quote: 'TRY' }
+            ];
+
+            crosses.forEach(({ base, quote }) => {
+                if (rates[base] && rates[quote]) {
+                    const crossRate = rates[quote] / rates[base];
                     data.push({
-                        symbol: `${currency}/USD`,
-                        price: parseFloat((1 / rates[currency]).toFixed(4)),
+                        symbol: `${base}/${quote}`,
+                        price: parseFloat(crossRate.toFixed(4)),
                         change: parseFloat((Math.random() - 0.5).toFixed(2))
                     });
                 }
-            });
-
-            // Add popular cross pairs (EUR/TRY, EUR/GBP, EUR/UAH, etc.)
-            const baseCurrencies = ['EUR', 'GBP'];
-            const quoteCurrencies = ['TRY', 'UAH', 'JPY', 'CHF', 'GBP'];
-
-            baseCurrencies.forEach(base => {
-                quoteCurrencies.forEach(quote => {
-                    if (base !== quote && rates[base] && rates[quote]) {
-                        const crossRate = rates[quote] / rates[base];
-                        data.push({
-                            symbol: `${base}/${quote}`,
-                            price: parseFloat(crossRate.toFixed(4)),
-                            change: parseFloat((Math.random() - 0.5).toFixed(2))
-                        });
-                    }
-                });
             });
 
             console.log(`Forex data updated: ${data.length} pairs including UAH and global currencies`);

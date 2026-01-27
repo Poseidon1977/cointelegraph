@@ -298,26 +298,8 @@ async function fetchForex() {
         const res = await fetch('/api/forex');
         const data = await res.json();
 
-        // Filter to show only major currency pairs in one direction
-        // Show: USD/TRY, EUR/TRY, USD/UAH, EUR/UAH, GBP/TRY etc.
-        // Hide: TRY/USD, TRY/EUR, UAH/USD, UAH/EUR etc.
-        const majorCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'CHF'];
-        const targetCurrencies = ['TRY', 'UAH']; // Currencies we want to see against majors
-        const filteredData = data.filter(f => {
-            const [cur1, cur2] = f.symbol.split('/');
-            // Show if: major/target (USD/TRY, EUR/UAH) OR major/other (not reverse)
-            if (majorCurrencies.includes(cur1)) {
-                return true; // Show all pairs starting with major currencies
-            }
-            // Hide if: target/major (TRY/USD, UAH/EUR)
-            if (targetCurrencies.includes(cur1) && majorCurrencies.includes(cur2)) {
-                return false;
-            }
-            // Show other pairs
-            return !majorCurrencies.includes(cur2);
-        });
-
-        renderGrid(grid, filteredData.map(f => ({
+        // Render all pairs sent by the server (server now handles filtering)
+        renderGrid(grid, data.map(f => ({
             name: `${getPairFlags(f.symbol)} ${f.symbol}`,
             symbol: f.symbol,
             price: f.price.toFixed(4),
