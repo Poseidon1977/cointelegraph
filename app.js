@@ -5,8 +5,18 @@
 
 // --- Configuration & Data Maps ---
 const config = {
-    crypto: ['bitcoin', 'ethereum', 'solana', 'binancecoin', 'ripple', 'cardano', 'dogecoin', 'polkadot', 'tron', 'chainlink', 'avalanche-2', 'shiba-inu', 'toncoin', 'stellar', 'sui', 'litecoin', 'bitcoin-cash', 'near', 'aptos', 'cosmos', 'fantom', 'optimism', 'arbitrum', 'render-token', 'okb', 'monero', 'kaspa', 'bittensor', 'staked-ether'],
-    stocks: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC'],
+    crypto: [
+        'bitcoin', 'ethereum', 'solana', 'binancecoin', 'ripple', 'cardano', 'dogecoin', 'polkadot', 'tron', 'chainlink',
+        'avalanche-2', 'shiba-inu', 'toncoin', 'stellar', 'sui', 'litecoin', 'bitcoin-cash', 'near', 'aptos', 'cosmos',
+        'fantom', 'optimism', 'arbitrum', 'render-token', 'okb', 'monero', 'kaspa', 'bittensor', 'staked-ether',
+        'internet-computer', 'uniswap', 'ethereum-classic', 'mantle', 'thorchain', 'jupiter-exchange-solana', 'pyth-network',
+        'bonk', 'pepe', 'dogwifhat', 'floki', 'sei-network', 'celestia', 'arbitrum', 'optimism', 'blast', 'zksync'
+    ],
+    stocks: [
+        'AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC',
+        'KO', 'MCD', 'DIS', 'V', 'JPM', 'WMT', 'PG', 'NKE', 'ORCL', 'CRM', 'ADBE',
+        'PYPL', 'SHOP', 'UBER', 'ABNB', 'COIN', 'MSTR', 'AMD', 'QCOM', 'TXN'
+    ],
     refreshInterval: 30000 // 30 seconds
 };
 
@@ -90,16 +100,47 @@ function setupSearch() {
             return;
         }
 
-        // Search in cached crypto data as primary source
-        const results = (State.data['dashboard'] || [])
-            .filter(coin => coin.name.toLowerCase().includes(query) || coin.symbol.toLowerCase().includes(query))
-            .slice(0, 5);
+        // Aggregate all searchable assets
+        const results = [];
 
-        if (results.length > 0) {
-            dropdown.innerHTML = results.map(coin => `
-                <div class="search-item" onclick="State.currentView='dashboard';navigateTo('dashboard');openAssetModal('dashboard', ${JSON.stringify(coin).replace(/"/g, '&quot;')})">
-                    ${getCryptoIcon(coin.symbol, coin.image)}
-                    <span>${coin.name} (${coin.symbol.toUpperCase()})</span>
+        // 1. Search Cryptos
+        if (State.data['dashboard']) {
+            State.data['dashboard'].forEach(coin => {
+                if (coin.name.toLowerCase().includes(query) || coin.symbol.toLowerCase().includes(query)) {
+                    results.push({ type: 'dashboard', data: coin, name: coin.name, symbol: coin.symbol, icon: getCryptoIcon(coin.symbol, coin.image) });
+                }
+            });
+        }
+
+        // 2. Search Stocks
+        if (State.data['stocks']) {
+            State.data['stocks'].forEach(stock => {
+                const stockName = getStockName(stock.symbol);
+                if (stockName.toLowerCase().includes(query) || stock.symbol.toLowerCase().includes(query)) {
+                    results.push({ type: 'stocks', data: stock, name: stockName, symbol: stock.symbol, icon: getStockIcon(stock.symbol) });
+                }
+            });
+        }
+
+        // 3. Search Commodities
+        if (State.data['commodities']) {
+            State.data['commodities'].forEach(item => {
+                if (item.name.toLowerCase().includes(query) || (item.symbol && item.symbol.toLowerCase().includes(query))) {
+                    results.push({ type: 'commodities', data: item, name: item.name, symbol: item.symbol || '', icon: getCommodityIcon(item.name) });
+                }
+            });
+        }
+
+        const filtered = results.slice(0, 10);
+
+        if (filtered.length > 0) {
+            dropdown.innerHTML = filtered.map(res => `
+                <div class="search-item" onclick="State.currentView='${res.type}';navigateTo('${res.type}');openAssetModal('${res.type}', ${JSON.stringify(res.data).replace(/"/g, '&quot;')})">
+                    <span class="search-icon">${res.icon}</span>
+                    <div class="search-meta">
+                        <span class="search-name">${res.name}</span>
+                        <span class="search-tag">${res.symbol.toUpperCase()} • ${res.type.replace('dashboard', 'crypto')}</span>
+                    </div>
                 </div>
             `).join('');
             dropdown.classList.remove('hidden');
@@ -538,7 +579,14 @@ function showToast(msg) {
 
 // Utility mapper for Stock names (frontend fallback)
 function getStockName(symbol) {
-    const names = { 'AAPL': 'Apple', 'TSLA': 'Tesla', 'NVDA': 'Nvidia', 'MSFT': 'Microsoft', 'AMZN': 'Amazon', 'GOOGL': 'Google', 'META': 'Meta', 'NFLX': 'Netflix', 'AMD': 'AMD', 'INTC': 'Intel' };
+    const names = {
+        'AAPL': 'Apple', 'TSLA': 'Tesla', 'NVDA': 'Nvidia', 'MSFT': 'Microsoft', 'AMZN': 'Amazon',
+        'GOOGL': 'Google', 'META': 'Meta', 'NFLX': 'Netflix', 'AMD': 'AMD', 'INTC': 'Intel',
+        'KO': 'Coca-Cola', 'MCD': 'McDonald\'s', 'DIS': 'Disney', 'V': 'Visa', 'JPM': 'JPMorgan',
+        'WMT': 'Walmart', 'PG': 'Procter & Gamble', 'NKE': 'Nike', 'ORCL': 'Oracle', 'CRM': 'Salesforce',
+        'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
+        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments'
+    };
     return names[symbol] || symbol;
 }
 
