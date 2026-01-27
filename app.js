@@ -55,7 +55,7 @@ const config = {
         'BABA', 'JPM', 'V', 'WMT', 'DIS', 'COIN', 'SQ', 'PYPL', 'SHOP', 'UBER',
         'ROKU', 'SNAP', 'SPOT', 'ZM', 'ADBE', 'CRM', 'AMD', 'ORCL', 'CSCO', 'AVGO',
         'QCOM', 'TXN', 'INTU', 'AMAT', 'MU', 'LRCX', 'ADI', 'PANW', 'SNPS', 'CDNS',
-        'ABNB', 'Airbnb', 'DASH', 'DoorDash', 'PINS', 'Pinterest', 'PLTR', 'Palantir'
+        'ABNB', 'DASH', 'PINS', 'PLTR'
     ],
     commodities: [
         'GOLD', 'SILVER', 'PLATINUM', 'PALLADIUM', 'COPPER',
@@ -185,8 +185,8 @@ async function fetchStocks() {
         renderGrid(grid, data.map(stock => ({
             name: `${getStockIcon(stock.symbol)} ${stock.symbol}`,
             symbol: stock.symbol,
-            price: `$${stock.price.toFixed(2)}`,
-            change: stock.change,
+            price: stock.price ? `$${Number(stock.price).toFixed(2)}` : 'N/A',
+            change: stock.change || 0,
             id: stock.symbol
         })));
     } catch (e) {
@@ -217,12 +217,12 @@ async function fetchCommodities() {
         });
 
         // Define category display order (gold first)
-        const categoryOrder = ['gold', 'metal', 'energy', 'agriculture', 'livestock'];
+        const categoryOrder = ['gold', 'metals', 'energy', 'agri', 'livestock'];
         const categoryTitles = {
             'gold': '🥇 Altın / Gold',
-            'metal': 'Precious Metals',
+            'metals': 'Precious Metals',
             'energy': 'Energy',
-            'agriculture': 'Agriculture',
+            'agri': 'Agriculture',
             'livestock': 'Livestock'
         };
 
@@ -335,8 +335,8 @@ async function fetchForex() {
         renderGrid(grid, data.map(f => ({
             name: `${getPairFlags(f.symbol)} ${f.symbol}`,
             symbol: f.symbol,
-            price: f.price.toFixed(4),
-            change: f.change,
+            price: f.price ? Number(f.price).toFixed(4) : 'N/A',
+            change: f.change || 0,
             id: f.symbol
         })));
 

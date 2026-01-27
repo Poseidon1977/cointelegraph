@@ -73,21 +73,26 @@ app.get('/api/stocks', async (req, res) => {
         const { symbols } = req.query; // Expecting comma separated symbols
         const symbolsList = symbols ? symbols.split(',') : ['AAPL', 'TSLA', 'AMZN', 'MSFT', 'GOOGL', 'NVDA', 'META', 'BRK.B'];
 
-        const promises = symbolsList.map(s =>
-            axios.get(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${FINNHUB_KEY}`)
-        );
-
-        const responses = await Promise.all(promises);
-        const data = responses.map((r, i) => ({
-            symbol: symbolsList[i],
-            price: r.data.c,
-            change: r.data.dp,
-            high: r.data.h,
-            low: r.data.l,
-            open: r.data.o
-        }));
-
-        res.json(data);
+        const results = [];
+        for (const symbol of symbolsList) {
+            try {
+                const response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`, { timeout: 2000 });
+                results.push({
+                    symbol: symbol,
+                    price: response.data.c || 0,
+                    change: response.data.dp || 0,
+                    high: response.data.h || 0,
+                    low: response.data.l || 0,
+                    open: response.data.o || 0
+                });
+                // Small delay to avoid burst rate limits if list is long
+                if (symbolsList.length > 10) await new Promise(r => setTimeout(r, 50));
+            } catch (err) {
+                console.error(`Error fetching ${symbol}:`, err.message);
+                // Push placeholder or skip
+            }
+        }
+        res.json(results);
     } catch (e) {
         console.error('Stocks error:', e.response ? e.response.data : e.message);
         res.status(500).json({ error: 'Failed to fetch stock data', details: e.message });
@@ -222,10 +227,10 @@ app.get('/api/commodities', async (req, res) => {
             'Gold': { basePrice: 5000, unit: 'oz', variation: 50, category: 'gold' },
 
             // Precious Metals (per ounce)
-            'Silver': { basePrice: 29.5, unit: 'oz', variation: 1, category: 'metal' },
-            'Platinum': { basePrice: 950, unit: 'oz', variation: 20, category: 'metal' },
-            'Palladium': { basePrice: 1020, unit: 'oz', variation: 30, category: 'metal' },
-            'Copper': { basePrice: 8500, unit: 'ton', variation: 150, category: 'metal' },
+            'Silver': { basePrice: 29.5, unit: 'oz', variation: 1, category: 'metals' },
+            'Platinum': { basePrice: 950, unit: 'oz', variation: 20, category: 'metals' },
+            'Palladium': { basePrice: 1020, unit: 'oz', variation: 30, category: 'metals' },
+            'Copper': { basePrice: 8500, unit: 'ton', variation: 150, category: 'metals' },
 
             // Energy
             'Crude Oil (WTI)': { basePrice: 78.50, unit: 'barrel', variation: 2, category: 'energy' },
@@ -235,14 +240,14 @@ app.get('/api/commodities', async (req, res) => {
             'Gasoline': { basePrice: 2.35, unit: 'gallon', variation: 0.1, category: 'energy' },
 
             // Agricultural
-            'Wheat': { basePrice: 6.20, unit: 'bushel', variation: 0.3, category: 'agriculture' },
-            'Corn': { basePrice: 4.75, unit: 'bushel', variation: 0.2, category: 'agriculture' },
-            'Soybeans': { basePrice: 12.80, unit: 'bushel', variation: 0.5, category: 'agriculture' },
-            'Coffee': { basePrice: 1.85, unit: 'lb', variation: 0.1, category: 'agriculture' },
-            'Sugar': { basePrice: 0.22, unit: 'lb', variation: 0.02, category: 'agriculture' },
-            'Cotton': { basePrice: 0.82, unit: 'lb', variation: 0.05, category: 'agriculture' },
-            'Cocoa': { basePrice: 4250, unit: 'ton', variation: 150, category: 'agriculture' },
-            'Rice': { basePrice: 17.50, unit: 'cwt', variation: 0.8, category: 'agriculture' },
+            'Wheat': { basePrice: 6.20, unit: 'bushel', variation: 0.3, category: 'agri' },
+            'Corn': { basePrice: 4.75, unit: 'bushel', variation: 0.2, category: 'agri' },
+            'Soybeans': { basePrice: 12.80, unit: 'bushel', variation: 0.5, category: 'agri' },
+            'Coffee': { basePrice: 1.85, unit: 'lb', variation: 0.1, category: 'agri' },
+            'Sugar': { basePrice: 0.22, unit: 'lb', variation: 0.02, category: 'agri' },
+            'Cotton': { basePrice: 0.82, unit: 'lb', variation: 0.05, category: 'agri' },
+            'Cocoa': { basePrice: 4250, unit: 'ton', variation: 150, category: 'agri' },
+            'Rice': { basePrice: 17.50, unit: 'cwt', variation: 0.8, category: 'agri' },
 
             // Livestock
             'Live Cattle': { basePrice: 178.50, unit: 'lb', variation: 3, category: 'livestock' },
