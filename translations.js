@@ -43,7 +43,13 @@ const translations = {
         'KO': 'Coca-Cola', 'MCD': 'McDonald\'s', 'DIS': 'Disney', 'V': 'Visa', 'JPM': 'JPMorgan',
         'WMT': 'Walmart', 'PG': 'Procter & Gamble', 'NKE': 'Nike', 'ORCL': 'Oracle', 'CRM': 'Salesforce',
         'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
-        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments'
+        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments',
+        // Commodities
+        'Gold': 'Altın', 'Silver': 'Gümüş', 'Platinum': 'Platin', 'Palladium': 'Paladyum', 'Copper': 'Bakır',
+        'Crude Oil (WTI)': 'Ham Petrol (WTI)', 'Brent Oil': 'Brent Petrol', 'Natural Gas': 'Doğal Gaz',
+        'Heating Oil': 'Isınma Yakıtı', 'Gasoline': 'Benzin', 'Wheat': 'Buğday', 'Corn': 'Mısır',
+        'Soybeans': 'Soya Fasulyesi', 'Coffee': 'Kahve', 'Sugar': 'Şeker', 'Cotton': 'Pamuk',
+        'Cocoa': 'Kakao', 'Rice': 'Pirinç', 'Live Cattle': 'Canlı Hayvan', 'Lean Hogs': 'Yağsız Domuz'
     },
     en: {
         'dashboard': 'Market Overview',
@@ -85,7 +91,13 @@ const translations = {
         'KO': 'Coca-Cola', 'MCD': 'McDonald\'s', 'DIS': 'Disney', 'V': 'Visa', 'JPM': 'JPMorgan',
         'WMT': 'Walmart', 'PG': 'Procter & Gamble', 'NKE': 'Nike', 'ORCL': 'Oracle', 'CRM': 'Salesforce',
         'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
-        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments'
+        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments',
+        // Commodities
+        'Gold': 'Gold', 'Silver': 'Silver', 'Platinum': 'Platinum', 'Palladium': 'Palladium', 'Copper': 'Copper',
+        'Crude Oil (WTI)': 'Crude Oil (WTI)', 'Brent Oil': 'Brent Oil', 'Natural Gas': 'Natural Gas',
+        'Heating Oil': 'Heating Oil', 'Gasoline': 'Gasoline', 'Wheat': 'Wheat', 'Corn': 'Corn',
+        'Soybeans': 'Soybeans', 'Coffee': 'Coffee', 'Sugar': 'Sugar', 'Cotton': 'Cotton',
+        'Cocoa': 'Cocoa', 'Rice': 'Rice', 'Live Cattle': 'Live Cattle', 'Lean Hogs': 'Lean Hogs'
     },
     ua: {
         'dashboard': 'Огляд ринку',
@@ -127,7 +139,13 @@ const translations = {
         'KO': 'Coca-Cola', 'MCD': 'McDonald\'s', 'DIS': 'Disney', 'V': 'Visa', 'JPM': 'JPMorgan',
         'WMT': 'Walmart', 'PG': 'Procter & Gamble', 'NKE': 'Nike', 'ORCL': 'Oracle', 'CRM': 'Salesforce',
         'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
-        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments'
+        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments',
+        // Commodities
+        'Gold': 'Золото', 'Silver': 'Срібло', 'Platinum': 'Платина', 'Palladium': 'Паладій', 'Copper': 'Мідь',
+        'Crude Oil (WTI)': 'Сира нафта (WTI)', 'Brent Oil': 'Нафта Brent', 'Natural Gas': 'Природний газ',
+        'Heating Oil': 'Мазут', 'Gasoline': 'Бензин', 'Wheat': 'Пшениця', 'Corn': 'Кукурудза',
+        'Soybeans': 'Соєві боби', 'Coffee': 'Кава', 'Sugar': 'Цукор', 'Cotton': 'Бавовна',
+        'Cocoa': 'Какао', 'Rice': 'Рис', 'Live Cattle': 'Жива худоба', 'Lean Hogs': 'Пісна свинина'
     },
     de: {
         'dashboard': 'Marktübersicht',
@@ -169,7 +187,13 @@ const translations = {
         'KO': 'Coca-Cola', 'MCD': 'McDonald\'s', 'DIS': 'Disney', 'V': 'Visa', 'JPM': 'JPMorgan',
         'WMT': 'Walmart', 'PG': 'Procter & Gamble', 'NKE': 'Nike', 'ORCL': 'Oracle', 'CRM': 'Salesforce',
         'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
-        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments'
+        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments',
+        // Commodities
+        'Gold': 'Gold', 'Silver': 'Silber', 'Platinum': 'Platin', 'Palladium': 'Palladium', 'Copper': 'Kupfer',
+        'Crude Oil (WTI)': 'Rohöl (WTI)', 'Brent Oil': 'Brent Öl', 'Natural Gas': 'Erdgas',
+        'Heating Oil': 'Heizöl', 'Gasoline': 'Benzin', 'Wheat': 'Weizen', 'Corn': 'Mais',
+        'Soybeans': 'Sojabohnen', 'Coffee': 'Kaffee', 'Sugar': 'Zucker', 'Cotton': 'Baumwolle',
+        'Cocoa': 'Kakao', 'Rice': 'Reis', 'Live Cattle': 'Lebendvieh', 'Lean Hogs': 'Mastschweine'
     }
 };
 

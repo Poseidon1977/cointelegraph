@@ -425,7 +425,7 @@ function createCommodityCard(item) {
 
     card.innerHTML = `
         <header>
-            <div class="asset-name">${getCommodityIcon(item.name)} ${item.name}</div>
+            <div class="asset-name">${getCommodityIcon(item.name)} ${t(item.name)}</div>
             <span class="badge ${isUp ? 'bg-up' : 'bg-down'}">${isUp ? '▲' : '▼'} ${Math.abs(item.change).toFixed(2)}%</span>
         </header>
         <div class="price-box">
@@ -548,7 +548,7 @@ function openAssetModal(type, item) {
     const modal = document.getElementById('asset-modal');
     if (!modal) return;
 
-    document.getElementById('modal-name').innerText = item.name || item.symbol;
+    document.getElementById('modal-name').innerText = t(item.name || item.symbol);
 
     // Safety check for price
     let priceText = '...';
