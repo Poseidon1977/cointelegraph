@@ -109,27 +109,43 @@ const config = {
 window.currentView = 'dashboard';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Language
-    const savedLang = localStorage.getItem('app_lang') || 'en';
-    localStorage.setItem('app_lang', savedLang);
+    try {
+        console.log('Initializing Application...');
 
-    setupNavigation();
-    initClock();
-    startDataCycles();
-    setupSearch();
+        // Version-based cache clearing to avoid structure mismatches
+        const APP_VERSION = '2.2';
+        if (localStorage.getItem('app_version') !== APP_VERSION) {
+            console.log('Updating application version, clearing old cache...');
+            const lang = localStorage.getItem('app_lang');
+            localStorage.clear();
+            if (lang) localStorage.setItem('app_lang', lang);
+            localStorage.setItem('app_version', APP_VERSION);
+        }
 
-    // Setup Language Selector
-    const langSelect = document.getElementById('lang-select');
-    if (langSelect) {
-        langSelect.value = savedLang;
-        langSelect.addEventListener('change', (e) => {
-            localStorage.setItem('app_lang', e.target.value);
-            updateUILanguage();
-        });
+        // Initialize Language
+        const savedLang = localStorage.getItem('app_lang') || 'en';
+        localStorage.setItem('app_lang', savedLang);
+
+        setupNavigation();
+        initClock();
+        startDataCycles();
+        setupSearch();
+
+        // Setup Language Selector
+        const langSelect = document.getElementById('lang-select');
+        if (langSelect) {
+            langSelect.value = savedLang;
+            langSelect.addEventListener('change', (e) => {
+                localStorage.setItem('app_lang', e.target.value);
+                updateUILanguage();
+            });
+        }
+
+        // Initial UI Translation
+        updateUILanguage();
+    } catch (e) {
+        console.error('Fatal Initialization Error:', e);
     }
-
-    // Initial UI Translation
-    updateUILanguage();
 });
 
 function setupNavigation() {
@@ -210,11 +226,11 @@ function fetchCurrentViewData(forceFetch = false) {
     }
 
     switch (view) {
-        case 'dashboard': fetchCrypto(); break;
-        case 'stocks': fetchStocks(); break;
-        case 'commodities': fetchCommodities(); break;
-        case 'forex': fetchForex(); break;
-        case 'news': fetchNews(); break;
+        case 'dashboard': fetchCrypto().catch(e => console.error('Crypto error', e)); break;
+        case 'stocks': fetchStocks().catch(e => console.error('Stocks error', e)); break;
+        case 'commodities': fetchCommodities().catch(e => console.error('Commodities error', e)); break;
+        case 'forex': fetchForex().catch(e => console.error('Forex error', e)); break;
+        case 'news': fetchNews().catch(e => console.error('News error', e)); break;
     }
 }
 
@@ -228,32 +244,31 @@ function renderCachedView(view, data) {
     const grid = document.getElementById(gridIds[view]);
     if (!grid || !data) return;
 
-    if (view === 'dashboard') {
+    if (view === 'dashboard' && Array.isArray(data)) {
         renderGrid(grid, data.map(coin => ({
-            name: `${getCryptoIcon(coin.symbol, coin.image)} ${coin.name}`,
-            symbol: coin.symbol.toUpperCase(),
+            name: `${getCryptoIcon(coin.symbol, coin.image)} ${coin.name || 'Unknown'}`,
+            symbol: (coin.symbol || '?').toUpperCase(),
             price: coin.current_price ? `$${coin.current_price.toLocaleString()}` : 'N/A',
             change: coin.price_change_percentage_24h || 0,
-            id: coin.id
+            id: coin.id || coin.symbol
         })));
-    } else if (view === 'stocks') {
+    } else if (view === 'stocks' && Array.isArray(data)) {
         renderGrid(grid, data.map(stock => ({
-            name: `${getStockIcon(stock.symbol)} ${stock.symbol}`,
-            symbol: stock.symbol,
+            name: `${getStockIcon(stock.symbol)} ${stock.symbol || 'Unknown'}`,
+            symbol: stock.symbol || '?',
             price: stock.price ? `$${Number(stock.price).toFixed(2)}` : 'N/A',
             change: stock.change || 0,
             id: stock.symbol
         })));
-    } else if (view === 'forex') {
+    } else if (view === 'forex' && Array.isArray(data)) {
         renderGrid(grid, data.map(f => ({
-            name: `${getPairFlags(f.symbol)} ${f.symbol}`,
-            symbol: f.symbol,
+            name: `${getPairFlags(f.symbol)} ${f.symbol || 'Unknown'}`,
+            symbol: f.symbol || '?',
             price: f.price ? Number(f.price).toFixed(4) : 'N/A',
             change: f.change || 0,
             id: f.symbol
         })));
     }
-    // Commodities has a more complex rendering, so we fetch it live or implement a simplified cached version
 }
 
 async function fetchCrypto() {
@@ -264,19 +279,22 @@ async function fetchCrypto() {
         const ids = config.crypto.map(c => c.id).join(',');
         const res = await fetch(`/api/crypto/markets?ids=${ids}`);
         const data = await res.json();
+        if (!data || !Array.isArray(data)) throw new Error('Invalid crypto data');
 
         localStorage.setItem('cache_dashboard', JSON.stringify(data));
 
         renderGrid(grid, data.map(coin => ({
-            name: `${getCryptoIcon(coin.symbol, coin.image)} ${coin.name}`,
-            symbol: coin.symbol.toUpperCase(),
+            name: `${getCryptoIcon(coin.symbol, coin.image)} ${coin.name || 'Unknown'}`,
+            symbol: (coin.symbol || '?').toUpperCase(),
             price: coin.current_price ? `$${coin.current_price.toLocaleString()}` : 'N/A',
             change: coin.price_change_percentage_24h || 0,
-            id: coin.id
+            id: coin.id || coin.symbol
         })));
     } catch (e) {
         console.error('Crypto error', e);
-        showToast('Error loading crypto data');
+        if (!localStorage.getItem('cache_dashboard')) {
+            grid.innerHTML = '<div class="loading" style="color:#ff3d00">Error loading crypto data. Please refresh.</div>';
+        }
     }
 }
 
@@ -288,12 +306,13 @@ async function fetchStocks() {
         const symbols = config.stocks.map(s => s.symbol).join(',');
         const res = await fetch(`/api/stocks?symbols=${symbols}`);
         const data = await res.json();
+        if (!data || !Array.isArray(data)) throw new Error('Invalid stocks data');
 
         localStorage.setItem('cache_stocks', JSON.stringify(data));
 
         renderGrid(grid, data.map(stock => ({
-            name: `${getStockIcon(stock.symbol)} ${stock.symbol}`,
-            symbol: stock.symbol,
+            name: `${getStockIcon(stock.symbol)} ${stock.symbol || 'Unknown'}`,
+            symbol: stock.symbol || '?',
             price: stock.price ? `$${Number(stock.price).toFixed(2)}` : 'N/A',
             change: stock.change || 0,
             id: stock.symbol
@@ -459,13 +478,14 @@ async function fetchForex() {
     try {
         const res = await fetch('/api/forex');
         const data = await res.json();
+        if (!data || !Array.isArray(data)) throw new Error('Invalid forex data');
 
         localStorage.setItem('cache_forex', JSON.stringify(data));
 
         // Render all pairs sent by the server (server now handles filtering)
         renderGrid(grid, data.map(f => ({
-            name: `${getPairFlags(f.symbol)} ${f.symbol}`,
-            symbol: f.symbol,
+            name: `${getPairFlags(f.symbol)} ${f.symbol || 'Unknown'}`,
+            symbol: f.symbol || '?',
             price: f.price ? Number(f.price).toFixed(4) : 'N/A',
             change: f.change || 0,
             id: f.symbol
@@ -505,15 +525,17 @@ async function fetchNews() {
 let activeChart = null;
 
 function openAssetModal(item) {
+    if (!item) return;
     const modal = document.getElementById('asset-modal');
     if (!modal) return;
 
     modal.classList.remove('hidden');
 
     // Clean name for display (strip emojis if any)
-    const cleanName = item.name.replace(/<[^>]*>/g, '').trim();
+    const name = item.name || 'Unknown Asset';
+    const cleanName = typeof name === 'string' ? name.replace(/<[^>]*>/g, '').trim() : 'Unknown Asset';
     document.getElementById('modal-asset-name').innerText = cleanName;
-    document.getElementById('modal-asset-price').innerText = item.price;
+    document.getElementById('modal-asset-price').innerText = item.price || 'N/A';
 
     const changeBadge = document.getElementById('modal-asset-change');
     const isUp = item.change >= 0;

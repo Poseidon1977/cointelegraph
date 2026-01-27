@@ -98,32 +98,32 @@
                     <!-- Enhanced Converter Card -->
                     <div class="converter-card" id="converter-widget">
                         <div class="converter-header">
-                            <h3>Real-Time Currency Converter</h3>
+                            <h3 id="conv-title-text">Real-Time Currency Converter</h3>
                             <p>Global rates updated live</p>
                         </div>
 
                         <div class="converter-body">
                             <div class="conv-input-group">
-                                <label>Amount</label>
+                                <label id="label-amount">Amount</label>
                                 <input type="number" id="conv-amount" value="100" placeholder="0.00">
                             </div>
 
                             <div class="conv-selection-group">
                                 <div class="conv-col">
-                                    <label>From</label>
+                                    <label id="label-from">From</label>
                                     <select id="conv-from"></select>
                                 </div>
 
                                 <button id="conv-swap" class="swap-btn" title="Swap Currencies">⇄</button>
 
                                 <div class="conv-col">
-                                    <label>To</label>
+                                    <label id="label-to">To</label>
                                     <select id="conv-to"></select>
                                 </div>
                             </div>
 
                             <div class="conv-result-section">
-                                <div class="result-label">Converted Amount</div>
+                                <div class="result-label" id="conv-result-label">Converted Amount</div>
                                 <div class="result-value" id="conv-result">0.00</div>
                                 <div id="converter-mini-chart" style="height:60px; margin: 10px 0;"></div>
                                 <div class="result-rate-info" id="conv-rate-info">1 USD = 0.00 TRY</div>
