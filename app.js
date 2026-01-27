@@ -404,9 +404,11 @@ function updateConverter(data) {
         const f = from.value;
         const t = to.value;
         const resEl = document.getElementById('conv-res-val');
+        const infoEl = document.getElementById('conv-info');
 
         if (f === t) {
-            resEl.innerText = amount.toFixed(2);
+            resEl.innerText = amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (infoEl) infoEl.innerText = `1 ${f} = 1.00 ${t}`;
             return;
         }
 
@@ -414,12 +416,20 @@ function updateConverter(data) {
         const pair = data.find(p => p.symbol === `${f}/${t}`);
         const rev = data.find(p => p.symbol === `${t}/${f}`);
 
+        let rate = 0;
         if (pair) {
-            resEl.innerText = (amount * pair.price).toLocaleString();
+            rate = pair.price;
         } else if (rev) {
-            resEl.innerText = (amount / rev.price).toLocaleString();
+            rate = 1 / rev.price;
+        }
+
+        if (rate) {
+            const result = amount * rate;
+            resEl.innerText = result.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (infoEl) infoEl.innerText = `1 ${f} = ${rate.toFixed(4)} ${t}`;
         } else {
             resEl.innerText = "---";
+            if (infoEl) infoEl.innerText = "";
         }
     };
 

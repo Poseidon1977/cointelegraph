@@ -70,17 +70,32 @@
 
                 <div id="view-forex" class="view-section hidden">
                     <div class="forex-panel">
-                        <div class="converter-box card">
-                            <h3 id="conv-title">Currency Converter</h3>
-                            <div class="conv-row">
-                                <input type="number" id="conv-amount" value="1">
-                                <select id="conv-from"></select>
-                                <button id="conv-swap">↔</button>
-                                <select id="conv-to"></select>
+                        <div class="converter-box glass-card">
+                            <div class="converter-header">
+                                <i class="icon-swap">🔄</i>
+                                <h3 id="conv-title">Currency Converter</h3>
                             </div>
-                            <div class="conv-result">
-                                <span id="conv-res-val">0.00</span>
-                                <small id="conv-info"></small>
+                            <div class="conv-controls">
+                                <div class="input-group">
+                                    <label for="conv-amount" id="label-amount">Amount</label>
+                                    <input type="number" id="conv-amount" value="1" placeholder="0.00">
+                                </div>
+                                <div class="select-group">
+                                    <div class="currency-select">
+                                        <select id="conv-from"></select>
+                                    </div>
+                                    <button id="conv-swap" title="Swap Currencies">⇄</button>
+                                    <div class="currency-select">
+                                        <select id="conv-to"></select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="conv-result-area">
+                                <div class="result-label" id="res-label">Result</div>
+                                <div class="result-main">
+                                    <span id="conv-res-val">0.00</span>
+                                    <small id="conv-info"></small>
+                                </div>
                             </div>
                         </div>
                         <div class="grid-layout" id="forex-grid"></div>
