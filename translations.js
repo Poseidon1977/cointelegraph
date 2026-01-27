@@ -23,13 +23,23 @@ const translations = {
         'to': 'Hedef',
         'swap': 'Değiştir',
         'result': 'Sonuç',
+        'res_label': 'Sonuç',
+        'label_amount': 'Miktar',
         'gold_title': '🥇 Altın / Gold',
         'metals': 'Değerli Metaller',
         'energy': 'Enerji',
         'agri': 'Tarım',
         'livestock': 'Hayvancılık',
         'gram_altin': 'GRAM ALTIN',
-        'viewing': 'görüntüleniyor'
+        'viewing': 'görüntüleniyor',
+        'search_placeholder': 'Piyasalarda ara...',
+        // Stocks
+        'AAPL': 'Apple', 'TSLA': 'Tesla', 'NVDA': 'Nvidia', 'MSFT': 'Microsoft', 'AMZN': 'Amazon',
+        'GOOGL': 'Google', 'META': 'Meta', 'NFLX': 'Netflix', 'AMD': 'AMD', 'INTC': 'Intel',
+        'KO': 'Coca-Cola', 'MCD': 'McDonald\'s', 'DIS': 'Disney', 'V': 'Visa', 'JPM': 'JPMorgan',
+        'WMT': 'Walmart', 'PG': 'Procter & Gamble', 'NKE': 'Nike', 'ORCL': 'Oracle', 'CRM': 'Salesforce',
+        'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
+        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments'
     },
     en: {
         'dashboard': 'Market Overview',
@@ -51,13 +61,23 @@ const translations = {
         'to': 'To',
         'swap': 'Swap',
         'result': 'Result',
+        'res_label': 'Result',
+        'label_amount': 'Amount',
         'gold_title': '🥇 Gold',
         'metals': 'Precious Metals',
         'energy': 'Energy',
         'agri': 'Agriculture',
         'livestock': 'Livestock',
         'gram_altin': 'GRAM GOLD',
-        'viewing': 'viewing'
+        'viewing': 'viewing',
+        'search_placeholder': 'Search markets...',
+        // Stocks
+        'AAPL': 'Apple', 'TSLA': 'Tesla', 'NVDA': 'Nvidia', 'MSFT': 'Microsoft', 'AMZN': 'Amazon',
+        'GOOGL': 'Google', 'META': 'Meta', 'NFLX': 'Netflix', 'AMD': 'AMD', 'INTC': 'Intel',
+        'KO': 'Coca-Cola', 'MCD': 'McDonald\'s', 'DIS': 'Disney', 'V': 'Visa', 'JPM': 'JPMorgan',
+        'WMT': 'Walmart', 'PG': 'Procter & Gamble', 'NKE': 'Nike', 'ORCL': 'Oracle', 'CRM': 'Salesforce',
+        'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
+        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments'
     },
     ua: {
         'dashboard': 'Огляд ринку',
@@ -79,13 +99,23 @@ const translations = {
         'to': 'В',
         'swap': 'Обміняти',
         'result': 'Результат',
+        'res_label': 'Результат',
+        'label_amount': 'Сума',
         'gold_title': '🥇 Золото',
         'metals': 'Дорогоцінні метали',
         'energy': 'Енергетика',
         'agri': 'Сільське господарство',
         'livestock': 'Тваринництво',
         'gram_altin': 'ГРАМ ЗОЛОТА',
-        'viewing': 'перегляд'
+        'viewing': 'перегляд',
+        'search_placeholder': 'Пошук ринків...',
+        // Stocks
+        'AAPL': 'Apple', 'TSLA': 'Tesla', 'NVDA': 'Nvidia', 'MSFT': 'Microsoft', 'AMZN': 'Amazon',
+        'GOOGL': 'Google', 'META': 'Meta', 'NFLX': 'Netflix', 'AMD': 'AMD', 'INTC': 'Intel',
+        'KO': 'Coca-Cola', 'MCD': 'McDonald\'s', 'DIS': 'Disney', 'V': 'Visa', 'JPM': 'JPMorgan',
+        'WMT': 'Walmart', 'PG': 'Procter & Gamble', 'NKE': 'Nike', 'ORCL': 'Oracle', 'CRM': 'Salesforce',
+        'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
+        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments'
     },
     de: {
         'dashboard': 'Marktübersicht',
@@ -107,13 +137,23 @@ const translations = {
         'to': 'Nach',
         'swap': 'Tauschen',
         'result': 'Ergebnis',
+        'res_label': 'Ergebnis',
+        'label_amount': 'Betrag',
         'gold_title': '🥇 Gold',
         'metals': 'Edelmetalle',
         'energy': 'Energie',
         'agri': 'Landwirtschaft',
         'livestock': 'Viehbestand',
         'gram_altin': 'GRAMM GOLD',
-        'viewing': 'wird angezeigt'
+        'viewing': 'wird angezeigt',
+        'search_placeholder': 'Märkte suchen...',
+        // Stocks
+        'AAPL': 'Apple', 'TSLA': 'Tesla', 'NVDA': 'Nvidia', 'MSFT': 'Microsoft', 'AMZN': 'Amazon',
+        'GOOGL': 'Google', 'META': 'Meta', 'NFLX': 'Netflix', 'AMD': 'AMD', 'INTC': 'Intel',
+        'KO': 'Coca-Cola', 'MCD': 'McDonald\'s', 'DIS': 'Disney', 'V': 'Visa', 'JPM': 'JPMorgan',
+        'WMT': 'Walmart', 'PG': 'Procter & Gamble', 'NKE': 'Nike', 'ORCL': 'Oracle', 'CRM': 'Salesforce',
+        'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
+        'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments'
     }
 };
 
@@ -151,13 +191,18 @@ function updateUILanguage() {
         const staticMap = {
             'conv-title': 'converter',
             'label-lang': 'lang_label',
-            'set-title': 'preferences'
+            'set-title': 'preferences',
+            'label-amount': 'label_amount',
+            'res-label': 'res_label'
         };
 
         Object.entries(staticMap).forEach(([id, key]) => {
             const el = document.getElementById(id);
             if (el) el.innerText = t(key);
         });
+
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) searchInput.placeholder = t('search_placeholder');
 
     } catch (e) {
         console.warn('UI Language Sync non-fatal error:', e);
