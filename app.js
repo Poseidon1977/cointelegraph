@@ -420,7 +420,9 @@ function createCommodityCard(item) {
     const card = document.createElement('div');
     const isUp = item.change >= 0;
     card.className = 'asset-card card';
-    const priceDisplay = item.pricePerGram ? `$${item.pricePerGram}/g` : `$${item.price}/${item.unit}`;
+    const priceDisplay = item.pricePerGram
+        ? `$${item.pricePerGram}/${t('unit_g')}`
+        : `$${item.price}/${t(item.unit)}`;
     const sparkId = `spark-commodities-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
 
     card.innerHTML = `
@@ -554,7 +556,9 @@ function openAssetModal(type, item) {
     let priceText = '...';
     try {
         if (type === 'commodities') {
-            priceText = item.pricePerGram ? `$${item.pricePerGram}/g` : `$${item.price}/${item.unit}`;
+            priceText = item.pricePerGram
+                ? `$${item.pricePerGram}/${t('unit_g')}`
+                : `$${item.price}/${t(item.unit)}`;
         } else {
             priceText = createAssetCard(type, item).querySelector('.current-price').innerText;
         }

@@ -49,7 +49,10 @@ const translations = {
         'Crude Oil (WTI)': 'Ham Petrol (WTI)', 'Brent Oil': 'Brent Petrol', 'Natural Gas': 'Doğal Gaz',
         'Heating Oil': 'Isınma Yakıtı', 'Gasoline': 'Benzin', 'Wheat': 'Buğday', 'Corn': 'Mısır',
         'Soybeans': 'Soya Fasulyesi', 'Coffee': 'Kahve', 'Sugar': 'Şeker', 'Cotton': 'Pamuk',
-        'Cocoa': 'Kakao', 'Rice': 'Pirinç', 'Live Cattle': 'Canlı Hayvan', 'Lean Hogs': 'Yağsız Domuz'
+        'Cocoa': 'Kakao', 'Rice': 'Pirinç', 'Live Cattle': 'Canlı Hayvan', 'Lean Hogs': 'Yağsız Domuz',
+        // Units
+        'oz': 'ons', 'ton': 'ton', 'barrel': 'varil', 'MMBtu': 'MMBtu', 'gallon': 'galon', 'lb': 'lb',
+        'bushel': 'bushel', 'cwt': 'cwt', 'unit_g': 'gr'
     },
     en: {
         'dashboard': 'Market Overview',
@@ -97,7 +100,10 @@ const translations = {
         'Crude Oil (WTI)': 'Crude Oil (WTI)', 'Brent Oil': 'Brent Oil', 'Natural Gas': 'Natural Gas',
         'Heating Oil': 'Heating Oil', 'Gasoline': 'Gasoline', 'Wheat': 'Wheat', 'Corn': 'Corn',
         'Soybeans': 'Soybeans', 'Coffee': 'Coffee', 'Sugar': 'Sugar', 'Cotton': 'Cotton',
-        'Cocoa': 'Cocoa', 'Rice': 'Rice', 'Live Cattle': 'Live Cattle', 'Lean Hogs': 'Lean Hogs'
+        'Cocoa': 'Cocoa', 'Rice': 'Rice', 'Live Cattle': 'Live Cattle', 'Lean Hogs': 'Lean Hogs',
+        // Units
+        'oz': 'oz', 'ton': 'ton', 'barrel': 'barrel', 'MMBtu': 'MMBtu', 'gallon': 'gallon', 'lb': 'lb',
+        'bushel': 'bushel', 'cwt': 'cwt', 'unit_g': 'g'
     },
     ua: {
         'dashboard': 'Огляд ринку',
@@ -145,7 +151,10 @@ const translations = {
         'Crude Oil (WTI)': 'Сира нафта (WTI)', 'Brent Oil': 'Нафта Brent', 'Natural Gas': 'Природний газ',
         'Heating Oil': 'Мазут', 'Gasoline': 'Бензин', 'Wheat': 'Пшениця', 'Corn': 'Кукурудза',
         'Soybeans': 'Соєві боби', 'Coffee': 'Кава', 'Sugar': 'Цукор', 'Cotton': 'Бавовна',
-        'Cocoa': 'Какао', 'Rice': 'Рис', 'Live Cattle': 'Жива худоба', 'Lean Hogs': 'Пісна свинина'
+        'Cocoa': 'Какао', 'Rice': 'Рис', 'Live Cattle': 'Жива худоба', 'Lean Hogs': 'Пісна свинина',
+        // Units
+        'oz': 'унція', 'ton': 'тонна', 'barrel': 'барель', 'MMBtu': 'MMBtu', 'gallon': 'галон', 'lb': 'фунт',
+        'bushel': 'бушель', 'cwt': 'центнер', 'unit_g': 'г'
     },
     de: {
         'dashboard': 'Marktübersicht',
@@ -193,7 +202,10 @@ const translations = {
         'Crude Oil (WTI)': 'Rohöl (WTI)', 'Brent Oil': 'Brent Öl', 'Natural Gas': 'Erdgas',
         'Heating Oil': 'Heizöl', 'Gasoline': 'Benzin', 'Wheat': 'Weizen', 'Corn': 'Mais',
         'Soybeans': 'Sojabohnen', 'Coffee': 'Kaffee', 'Sugar': 'Zucker', 'Cotton': 'Baumwolle',
-        'Cocoa': 'Kakao', 'Rice': 'Reis', 'Live Cattle': 'Lebendvieh', 'Lean Hogs': 'Mastschweine'
+        'Cocoa': 'Kakao', 'Rice': 'Reis', 'Live Cattle': 'Lebendvieh', 'Lean Hogs': 'Mastschweine',
+        // Units
+        'oz': 'oz', 'ton': 't', 'barrel': 'Fass', 'MMBtu': 'MMBtu', 'gallon': 'Gallone', 'lb': 'Pfund',
+        'bushel': 'Scheffel', 'cwt': 'Zentner', 'unit_g': 'g'
     }
 };
 
