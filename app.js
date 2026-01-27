@@ -65,7 +65,7 @@ const config = {
     ],
 };
 
-let currentView = 'dashboard';
+window.currentView = 'dashboard';
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Language
@@ -95,7 +95,7 @@ function setupNavigation() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
             const target = item.dataset.target;
-            currentView = target;
+            window.currentView = target;
 
             // Update UI
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -108,7 +108,7 @@ function setupNavigation() {
             if (view) {
                 view.classList.remove('hidden');
                 view.classList.add('active');
-                updatePageTitle(target);
+                updateUILanguage(); // Instant sync
                 fetchCurrentViewData();
             }
         });
@@ -155,7 +155,7 @@ function fetchCurrentViewData(forceFetch = false) {
         }
     }
 
-    switch (currentView) {
+    switch (window.currentView) {
         case 'dashboard': fetchCrypto(); break;
         case 'stocks': fetchStocks(); break;
         case 'commodities': fetchCommodities(); break;
