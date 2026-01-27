@@ -108,12 +108,20 @@ const config = {
 
 window.currentView = 'dashboard';
 
+window.onerror = function (message, source, lineno, colno, error) {
+    console.error('Global Error:', message, 'at', source, ':', lineno);
+    if (typeof showToast === 'function') {
+        showToast(`System Error: ${message}`);
+    }
+    return false;
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        console.log('Initializing Application...');
+        console.log('Initializing Application v2.3...');
 
         // Version-based cache clearing to avoid structure mismatches
-        const APP_VERSION = '2.2';
+        const APP_VERSION = '2.3';
         if (localStorage.getItem('app_version') !== APP_VERSION) {
             console.log('Updating application version, clearing old cache...');
             const lang = localStorage.getItem('app_lang');

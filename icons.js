@@ -56,7 +56,8 @@ const cryptoIds = {
 
 // Get Flag Image URL
 function getCurrencyFlagUrl(currencyCode) {
-    const code = countryCodes[currencyCode?.toUpperCase()];
+    if (!currencyCode) return 'https://flagcdn.com/w40/un.png';
+    const code = countryCodes[currencyCode.toUpperCase()];
     if (!code) return 'https://flagcdn.com/w40/un.png'; // Fallback UN flag
     return `https://flagcdn.com/w40/${code}.png`;
 }
@@ -120,6 +121,7 @@ function getCommodityIcon(name) {
 
 // Get Pair Flags as HTML img tags
 function getPairFlags(pairSymbol) {
+    if (!pairSymbol || typeof pairSymbol !== 'string') return '';
     const parts = pairSymbol.split('/');
     if (parts.length === 2) {
         const url1 = getCurrencyFlagUrl(parts[0]);
