@@ -57,9 +57,26 @@ const config = {
 let currentView = 'dashboard';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Language
+    const savedLang = localStorage.getItem('app_lang') || 'en';
+    localStorage.setItem('app_lang', savedLang);
+
     setupNavigation();
     initClock();
     startDataCycles();
+
+    // Setup Language Selector
+    const langSelect = document.getElementById('lang-select');
+    if (langSelect) {
+        langSelect.value = savedLang;
+        langSelect.addEventListener('change', (e) => {
+            localStorage.setItem('app_lang', e.target.value);
+            updateUILanguage();
+        });
+    }
+
+    // Initial UI Translation
+    updateUILanguage();
 });
 
 function setupNavigation() {
@@ -87,15 +104,10 @@ function setupNavigation() {
 }
 
 function updatePageTitle(view) {
-    const titles = {
-        'dashboard': 'Market Overview',
-        'stocks': 'Stock Market',
-        'commodities': 'Commodities',
-        'forex': 'Foreign Exchange',
-        'news': 'Global News',
-        'settings': 'Settings'
-    };
-    document.getElementById('page-title').innerText = titles[view] || 'Market';
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle) {
+        pageTitle.innerText = t(view);
+    }
 }
 
 function initClock() {
@@ -215,7 +227,7 @@ async function fetchCommodities() {
             categoryHeader.style.marginTop = category === 'gold' ? '10px' : '20px';
             categoryHeader.style.marginBottom = '10px';
             categoryHeader.style.textShadow = category === 'gold' ? '0 0 10px rgba(255, 215, 0, 0.5)' : 'none';
-            categoryHeader.textContent = categoryTitles[category] || category.charAt(0).toUpperCase() + category.slice(1);
+            categoryHeader.textContent = t(category === 'gold' ? 'gold_title' : category);
             grid.appendChild(categoryHeader);
 
             if (category === 'gold') {
@@ -232,7 +244,7 @@ async function fetchCommodities() {
                         <div class="price-row">
                             <div class="coin-price" style="font-size: 0.95rem">$${item.price.toLocaleString()}</div>
                         </div>
-                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">Gram: $${item.pricePerGram?.toFixed(2)}</div>
+                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">${t('global_market')}: $${item.pricePerGram?.toFixed(2)}</div>
                     `;
                     grid.appendChild(cardUSD);
 
@@ -247,7 +259,7 @@ async function fetchCommodities() {
                         <div class="price-row">
                             <div class="coin-price" style="font-size: 0.95rem; color: #ff9e80">₺${item.pricePerGramTRY?.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</div>
                         </div>
-                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">Gram Altın</div>
+                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">${t('gram_altin')}</div>
                     `;
                     grid.appendChild(cardTRY);
 
@@ -262,7 +274,7 @@ async function fetchCommodities() {
                         <div class="price-row">
                             <div class="coin-price" style="font-size: 0.95rem; color: #80d8ff">₴${item.pricePerGramUAH?.toLocaleString('uk-UA', { maximumFractionDigits: 0 })}</div>
                         </div>
-                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">Gram Gold</div>
+                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">${t('gram_altin')}</div>
                     `;
                     grid.appendChild(cardUAH);
                 });
