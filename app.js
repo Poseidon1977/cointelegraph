@@ -184,19 +184,20 @@ function startDataCycles() {
 }
 
 function fetchCurrentViewData(forceFetch = false) {
+    const view = window.currentView || 'dashboard';
     // Show cached data immediately if available
-    const cachedData = localStorage.getItem(`cache_${currentView}`);
+    const cachedData = localStorage.getItem(`cache_${view}`);
     if (cachedData) {
         try {
             const parsed = JSON.parse(cachedData);
             // Render cached data first for instant feedback
-            renderCachedView(currentView, parsed);
+            renderCachedView(view, parsed);
         } catch (e) {
             console.error('Cache parse error', e);
         }
     }
 
-    switch (window.currentView) {
+    switch (view) {
         case 'dashboard': fetchCrypto(); break;
         case 'stocks': fetchStocks(); break;
         case 'commodities': fetchCommodities(); break;
@@ -347,15 +348,12 @@ async function fetchCommodities() {
                     // 1. USD Card (Global)
                     const cardUSD = document.createElement('div');
                     cardUSD.className = 'crypto-card up';
-                    cardUSD.innerHTML = `
-                        <div class="card-header">
-                            <span class="coin-name" style="font-size: 0.85rem">${icon} <img src="https://flagcdn.com/w40/us.png" class="flag-icon" alt="USD"> GOLD/USD</span>
-                        </div>
-                        <div class="price-row">
-                            <div class="coin-price" style="font-size: 0.95rem">$${item.price.toLocaleString()}</div>
-                        </div>
-                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">${t('global_market')}: $${item.pricePerGram?.toFixed(2)}</div>
-                    `;
+                    cardUSD.onclick = () => openAssetModal({
+                        name: 'GOLD/USD',
+                        symbol: 'XAU/USD',
+                        price: `$${item.price.toLocaleString()}`,
+                        change: item.change || 0
+                    });
                     grid.appendChild(cardUSD);
 
                     // 2. TRY Card (Turkey)
@@ -371,6 +369,12 @@ async function fetchCommodities() {
                         </div>
                         <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">${t('gram_altin')}</div>
                     `;
+                    cardTRY.onclick = () => openAssetModal({
+                        name: 'ALTIN/TRY',
+                        symbol: 'GRA/TRY',
+                        price: `₺${item.pricePerGramTRY?.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`,
+                        change: item.change || 0
+                    });
                     grid.appendChild(cardTRY);
 
                     // 3. UAH Card (Ukraine)
@@ -386,6 +390,12 @@ async function fetchCommodities() {
                         </div>
                         <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">${t('gram_altin')}</div>
                     `;
+                    cardUAH.onclick = () => openAssetModal({
+                        name: 'GOLD/UAH',
+                        symbol: 'GRA/UAH',
+                        price: `₴${item.pricePerGramUAH?.toLocaleString('uk-UA', { maximumFractionDigits: 0 })}`,
+                        change: item.change || 0
+                    });
                     grid.appendChild(cardUAH);
                 });
                 return;
@@ -411,6 +421,12 @@ async function fetchCommodities() {
                         <div class="coin-symbol" style="font-size: 0.65rem; color: #888">${item.symbol}</div>
                     </div>
                 `;
+                card.onclick = () => openAssetModal({
+                    name: item.name,
+                    symbol: item.symbol,
+                    price: priceDisplay,
+                    change: item.change || 0
+                });
                 grid.appendChild(card);
             });
         });
@@ -471,6 +487,113 @@ async function fetchNews() {
     }
 }
 
+let activeChart = null;
+
+function openAssetModal(item) {
+    const modal = document.getElementById('asset-modal');
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+
+    // Clean name for display (strip emojis if any)
+    const cleanName = item.name.replace(/<[^>]*>/g, '').trim();
+    document.getElementById('modal-asset-name').innerText = cleanName;
+    document.getElementById('modal-asset-price').innerText = item.price;
+
+    const changeBadge = document.getElementById('modal-asset-change');
+    const isUp = item.change >= 0;
+    changeBadge.className = `change-badge ${isUp ? 'change-up' : 'change-down'}`;
+    changeBadge.innerText = `${isUp ? '▲' : '▼'} ${Math.abs(item.change).toFixed(2)}%`;
+
+    const statsGrid = document.getElementById('modal-stats');
+    statsGrid.innerHTML = `
+        <div class="stat-item"><div class="stat-label">Symbol</div><div class="stat-value">${item.symbol}</div></div>
+        <div class="stat-item"><div class="stat-label">24h Change</div><div class="stat-value ${isUp ? 'up' : 'down'}">${item.change.toFixed(2)}%</div></div>
+        <div class="stat-item"><div class="stat-label">Market Volatility</div><div class="stat-value">Medium</div></div>
+        <div class="stat-item"><div class="stat-label">Status</div><div class="stat-value" style="color: #00e5ff">Live</div></div>
+    `;
+
+    renderDetailChart(isUp);
+}
+
+function closeAssetModal() {
+    const modal = document.getElementById('asset-modal');
+    if (modal) modal.classList.add('hidden');
+    if (activeChart) {
+        activeChart.destroy();
+        activeChart = null;
+    }
+}
+
+// Close modal handlers
+document.getElementById('close-modal')?.addEventListener('click', closeAssetModal);
+document.getElementById('asset-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'asset-modal') closeAssetModal();
+});
+// ESC key to close
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAssetModal();
+});
+
+function renderDetailChart(isUp) {
+    const options = {
+        series: [{
+            name: 'Price',
+            data: generateHistoricalData(isUp)
+        }],
+        chart: {
+            height: 300,
+            type: 'area',
+            toolbar: { show: false },
+            zoom: { enabled: false },
+            animations: { enabled: true, easing: 'easeinout', speed: 800 },
+            background: 'transparent'
+        },
+        colors: [isUp ? '#00e676' : '#ff3d00'],
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 3 },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.45,
+                opacityTo: 0.05,
+                stops: [20, 100]
+            }
+        },
+        grid: {
+            borderColor: 'rgba(255, 255, 255, 0.05)',
+            xaxis: { lines: { show: true } }
+        },
+        xaxis: {
+            categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+            labels: { style: { colors: '#888' } }
+        },
+        yaxis: {
+            labels: { style: { colors: '#888' } }
+        },
+        theme: { mode: 'dark' }
+    };
+
+    if (activeChart) activeChart.destroy();
+    activeChart = new ApexCharts(document.querySelector("#asset-chart"), options);
+    activeChart.render();
+}
+
+function generateHistoricalData(isUp) {
+    let base = 100;
+    let data = [];
+    for (let i = 0; i < 7; i++) {
+        let change = (Math.random() - 0.45) * 5;
+        if (!isUp) change = (Math.random() - 0.55) * 5;
+        base = base * (1 + change / 100);
+        data.push(parseFloat(base.toFixed(2)));
+    }
+    return data;
+}
+
 function renderGrid(container, items) {
     container.innerHTML = '';
     items.forEach(item => {
@@ -479,7 +602,6 @@ function renderGrid(container, items) {
         card.className = `crypto-card ${isUp ? 'up' : 'down'}`;
 
         // Generate random sparkline data (7 points) - simulating 7-day trend
-        // In production, this should come from API
         const sparklineData = generateSparklineData(isUp);
         const sparklineSVG = createSparklineSVG(sparklineData, isUp);
 
@@ -496,6 +618,7 @@ function renderGrid(container, items) {
                 ${sparklineSVG}
             </div>
         `;
+        card.onclick = () => openAssetModal(item);
         container.appendChild(card);
     });
 }
@@ -571,7 +694,7 @@ function updateConverter(data) {
 
     if (from === to) {
         document.getElementById('conv-result').innerText = amount.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
-        document.getElementById('conv-rate-info').innerText = `1 ${from} = 1.0000 ${to}`;
+        document.getElementById('conv-rate-info').innerText = `1 ${from} = 1.0000 ${to} `;
         return;
     }
 
