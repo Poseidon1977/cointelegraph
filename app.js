@@ -1,5 +1,5 @@
 /**
- * CoinTelegraph Pro Market Dashboard v4.0
+ * CoinTelegraph Pro Market Dashboard v5.0
  * State-First Architecture for High Reliability
  */
 
@@ -17,7 +17,8 @@ const config = {
         'KO', 'MCD', 'DIS', 'V', 'JPM', 'WMT', 'PG', 'NKE', 'ORCL', 'CRM', 'ADBE',
         'PYPL', 'SHOP', 'UBER', 'ABNB', 'COIN', 'MSTR', 'QCOM', 'TXN'
     ],
-    refreshInterval: 30000 // 30 seconds
+    refreshInterval: 10000, // 10 seconds
+    viewOrder: ['dashboard', 'stocks', 'commodities', 'forex', 'news', 'settings']
 };
 
 // --- Application State ---
@@ -26,7 +27,9 @@ const State = {
     language: 'en',
     data: {},
     isInitialized: false,
-    storageAvailable: false
+    storageAvailable: false,
+    refreshTimer: 0,
+    isFirstLoad: true
 };
 
 // --- Initialization ---
@@ -34,14 +37,13 @@ function bootstrap() {
     if (State.isInitialized) return;
 
     try {
-        console.group('🚀 CoinTelegraph Initialization');
 
         // 1. Detect Environment
         State.storageAvailable = checkStorage();
         console.log('Environment:', { storage: State.storageAvailable, ua: navigator.userAgent });
 
         // 2. Load Persisted State
-        const APP_VERSION = '4.0';
+        const APP_VERSION = '5.0';
         if (State.storageAvailable) {
             if (localStorage.getItem('app_version') !== APP_VERSION) {
                 console.log('New version detected - purging stale cache');
@@ -63,15 +65,51 @@ function bootstrap() {
 
         // 4. Start Data Engine
         fetchMarketData();
-        setInterval(fetchMarketData, config.refreshInterval);
+        setupRefreshLogic();
 
         State.isInitialized = true;
         console.log('Boot sequence complete.');
-        console.groupEnd();
     } catch (e) {
         console.error('CRITICAL BOOT FAILURE:', e);
         showRescueUI();
     }
+}
+
+function setupRefreshLogic() {
+    const timerEl = document.getElementById('refresh-timer');
+    const progressEl = document.getElementById('refresh-progress');
+    const refreshBtn = document.getElementById('manual-refresh');
+
+    let countdown = config.refreshInterval / 1000;
+    State.refreshTimer = countdown;
+
+    const updateUI = () => {
+        if (timerEl) timerEl.innerText = `${t('next_update')}: ${State.refreshTimer}s`;
+        if (progressEl) {
+            const percent = ((config.refreshInterval / 1000 - State.refreshTimer) / (config.refreshInterval / 1000)) * 100;
+            progressEl.style.width = `${percent}%`;
+        }
+    };
+
+    setInterval(() => {
+        State.refreshTimer--;
+        if (State.refreshTimer <= 0) {
+            State.refreshTimer = config.refreshInterval / 1000;
+            fetchMarketData(true);
+        }
+        updateUI();
+    }, 1000);
+
+    refreshBtn?.addEventListener('click', () => {
+        if (refreshBtn.classList.contains('spinning')) return;
+        refreshBtn.classList.add('spinning');
+        State.refreshTimer = config.refreshInterval / 1000;
+        fetchMarketData(true).finally(() => {
+            setTimeout(() => refreshBtn.classList.remove('spinning'), 500);
+        });
+    });
+
+    updateUI();
 }
 
 // --- Internal Managers ---
@@ -229,6 +267,133 @@ function setupNavigation() {
 
     // Handle initial navigation state
     navigateTo(State.currentView, true);
+
+    // Setup Swipe Listeners
+    setupSwipeNavigation();
+}
+
+function setupSwipeNavigation() {
+    const container = document.getElementById('view-container');
+    const slider = document.getElementById('views-slider');
+    if (!container || !slider) return;
+
+    let isDragging = false;
+    let currentTranslate = 0;
+    const initialIndex = config.viewOrder.indexOf(State.currentView);
+    const initialOffset = -(initialIndex * (slider.offsetWidth / config.viewOrder.length));
+    let prevTranslate = initialOffset; // Correct alignment
+    let animationID = 0;
+    // Sync displacement for manual navigation
+    window.syncSwipeTranslate = (viewId) => {
+        const idx = config.viewOrder.indexOf(viewId);
+        prevTranslate = -(idx * (slider.offsetWidth / config.viewOrder.length));
+        currentTranslate = prevTranslate;
+    };
+
+    let startPos = 0;
+    let startY = 0;
+    let isHorizontalSwipe = false;
+
+    container.addEventListener('touchstart', touchStart, { passive: false });
+    container.addEventListener('touchend', touchEnd, { passive: false });
+    container.addEventListener('touchmove', touchMove, { passive: false });
+
+    container.addEventListener('mousedown', touchStart);
+    container.addEventListener('mouseup', touchEnd);
+    container.addEventListener('mouseleave', touchEnd);
+    container.addEventListener('mousemove', touchMove);
+
+    function touchStart(event) {
+        startPos = getPositionX(event);
+        startY = getPositionY(event);
+        isHorizontalSwipe = false;
+        isDragging = false; // Don't start dragging until we know direction
+        slider.style.transition = 'none';
+        container.style.cursor = 'grabbing';
+    }
+
+    function touchEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        cancelAnimationFrame(animationID);
+        isHorizontalSwipe = false;
+        container.style.cursor = 'default';
+
+        const movedBy = currentTranslate - prevTranslate;
+        const width = container.offsetWidth;
+        const currentIndex = config.viewOrder.indexOf(State.currentView);
+
+        let targetIndex = currentIndex;
+        // Snap threshold: 20% of width or high velocity
+        if (movedBy < -width * 0.15 && currentIndex < config.viewOrder.length - 1) {
+            targetIndex = currentIndex + 1;
+        } else if (movedBy > width * 0.15 && currentIndex > 0) {
+            targetIndex = currentIndex - 1;
+        }
+
+        slider.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        navigateTo(config.viewOrder[targetIndex]);
+
+        // Update prevTranslate for next session
+        prevTranslate = -(targetIndex * (100 / config.viewOrder.length)) * (slider.offsetWidth / 100);
+    }
+
+    function touchMove(event) {
+        const currentX = getPositionX(event);
+        const currentY = getPositionY(event);
+        const deltaX = Math.abs(currentX - startPos);
+        const deltaY = Math.abs(currentY - startY);
+
+        // Determine swipe direction on first significant movement
+        if (!isDragging && !isHorizontalSwipe && (deltaX > 10 || deltaY > 10)) {
+            isHorizontalSwipe = deltaX > deltaY;
+            if (isHorizontalSwipe) {
+                isDragging = true;
+                animationID = requestAnimationFrame(animation);
+            }
+        }
+
+        // Only handle horizontal swipes
+        if (isDragging && isHorizontalSwipe) {
+            if (event.cancelable) event.preventDefault();
+            const currentPosition = getPositionX(event);
+            const currentIndex = config.viewOrder.indexOf(State.currentView);
+            const baseTranslate = -(currentIndex * container.offsetWidth);
+            currentTranslate = baseTranslate + (currentPosition - startPos);
+
+            // Real-time tab feedback: Update active state if we pass 50%
+            const movedBy = currentTranslate - baseTranslate;
+            const threshold = container.offsetWidth * 0.5;
+            let feedbackIndex = currentIndex;
+            if (movedBy < -threshold && currentIndex < config.viewOrder.length - 1) feedbackIndex++;
+            if (movedBy > threshold && currentIndex > 0) feedbackIndex--;
+
+            const feedbackView = config.viewOrder[feedbackIndex];
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.view === feedbackView);
+            });
+        }
+    }
+
+    function getPositionX(event) {
+        return event.type.includes('mouse') ? event.pageX : event.touches[0].clientX;
+    }
+
+    function getPositionY(event) {
+        return event.type.includes('mouse') ? event.pageY : event.touches[0].clientY;
+    }
+
+    function animation() {
+        if (isDragging) {
+            const index = config.viewOrder.indexOf(State.currentView);
+            // We use percentage-based translate for the slider as it's defined in 600% width
+            const offsetPx = currentTranslate;
+            const fullWidth = slider.offsetWidth;
+            const percentage = (offsetPx / fullWidth) * 100;
+            slider.style.transform = `translateX(${percentage}%)`;
+            requestAnimationFrame(animation);
+        }
+    }
 }
 
 function navigateTo(viewId, isInitial = false) {
@@ -243,9 +408,20 @@ function navigateTo(viewId, isInitial = false) {
         el.classList.toggle('active', el.dataset.view === viewId);
     });
 
-    const viewEl = document.getElementById(`view-${viewId}`);
+    const slider = document.getElementById('views-slider');
+    const currentIndex = config.viewOrder.indexOf(viewId);
+    if (slider) {
+        slider.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        slider.style.transform = `translateX(-${(currentIndex * 100) / config.viewOrder.length}%)`;
+
+        // Update swipe tracker to prevent jumps
+        if (typeof window.syncSwipeTranslate === 'function') {
+            window.syncSwipeTranslate(viewId);
+        }
+
+    }
+
     document.querySelectorAll('.view-section').forEach(el => {
-        el.classList.toggle('hidden', el.id !== `view-${viewId}`);
         el.classList.toggle('active', el.id === `view-${viewId}`);
     });
 
@@ -258,9 +434,13 @@ function navigateTo(viewId, isInitial = false) {
     if (!isInitial) fetchMarketData();
 }
 
-async function fetchMarketData() {
+async function fetchMarketData(isRefresh = false) {
     const view = State.currentView;
     const grid = document.getElementById(`${view}-grid`) || document.getElementById('crypto-grid');
+
+    if (isRefresh) {
+        grid.querySelectorAll('.asset-card').forEach(card => card.classList.add('updated-flash'));
+    }
 
     try {
         let endpoint = '';
@@ -281,6 +461,13 @@ async function fetchMarketData() {
             // Persist for offline
             if (State.storageAvailable) localStorage.setItem(`cache_${view}`, JSON.stringify(data));
             renderView(view, data);
+
+            // Update "Last Updated" text
+            const lastUpdateEl = document.getElementById('label-last-updated');
+            if (lastUpdateEl) {
+                const now = new Date().toLocaleTimeString();
+                lastUpdateEl.innerText = `${t('last_updated')}: ${now}`;
+            }
         }
     } catch (e) {
         console.warn(`Fetch error for ${view}:`, e);
@@ -293,8 +480,6 @@ function renderView(view, data) {
     const grid = document.getElementById(gridId);
     if (!grid) return;
 
-    grid.innerHTML = '';
-
     if (view === 'commodities') {
         renderCommodities(grid, data);
         renderSparklines(view, data);
@@ -305,47 +490,98 @@ function renderView(view, data) {
         updateConverter(data);
     }
 
+    // Surgical Updates: Instead of grid.innerHTML = '', we update in place
     data.forEach(item => {
-        const card = createAssetCard(view, item);
-        grid.appendChild(card);
+        const cardId = `card-${view}-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
+        let card = document.getElementById(cardId);
+
+        if (card) {
+            updateAssetCard(card, view, item);
+        } else {
+            card = createAssetCard(view, item);
+            card.id = cardId;
+            grid.appendChild(card);
+        }
+    });
+
+    // Remove cards that are no longer in data
+    const activeIds = data.map(item => `card-${view}-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`);
+    grid.querySelectorAll('.asset-card').forEach(el => {
+        if (!activeIds.includes(el.id)) el.remove();
     });
 
     renderSparklines(view, data);
 }
 
+function updateAssetCard(card, view, item) {
+    let price = '', change = 0;
+
+    if (view === 'dashboard') {
+        price = `$${item.current_price?.toLocaleString()}`;
+        change = item.price_change_percentage_24h || 0;
+    } else if (view === 'stocks') {
+        price = `$${item.price?.toFixed(2)}`;
+        change = item.change || 0;
+    } else if (view === 'forex') {
+        price = item.price?.toFixed(4);
+        change = item.change || 0;
+    }
+
+    const isUp = change >= 0;
+
+    // Update background classes
+    card.classList.toggle('bullish', isUp);
+    card.classList.toggle('bearish', !isUp);
+
+    // Update Price
+    const priceEl = card.querySelector('.current-price');
+    if (priceEl && priceEl.innerText !== price) {
+        priceEl.innerText = price;
+    }
+
+    // Update Badge
+    const badgeEl = card.querySelector('.badge');
+    if (badgeEl) {
+        badgeEl.className = `badge ${isUp ? 'bg-up' : 'bg-down'}`;
+        badgeEl.innerHTML = `${isUp ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%`;
+    }
+}
+
+// Store chart instances to avoid re-rendering
+const chartStore = new Map();
+
 function renderSparklines(view, data) {
     if (!window.ApexCharts) return;
 
-    const items = view === 'commodities' ? data : data; // For commodities we might need to be specific but general work for now
-
-    setTimeout(() => { // Small delay to ensure DOM is ready
+    setTimeout(() => {
         data.forEach(item => {
             const id = `spark-${view}-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
             const el = document.getElementById(id);
             if (!el) return;
 
             const isUp = (view === 'dashboard' ? (item.price_change_percentage_24h >= 0) : (item.change >= 0));
+            const color = isUp ? '#00c853' : '#ff3d00';
 
-            const options = {
-                series: [{ data: Array.from({ length: 8 }, () => Math.floor(Math.random() * 40) + 60) }],
-                chart: { type: 'area', height: 40, sparkline: { enabled: true }, animations: { enabled: true } },
-                stroke: { curve: 'smooth', width: 2 },
-                colors: [isUp ? '#00c853' : '#ff3d00'],
-                fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
-                tooltip: { enabled: false }
-            };
-
-            new ApexCharts(el, options).render();
-
-            // Extra logic for specialized gold cards
-            if (view === 'commodities' && item.category === 'gold') {
-                ['try', 'uah'].forEach(suffix => {
-                    const extraId = `spark-commodities-gold-${suffix}`;
-                    const extraEl = document.getElementById(extraId);
-                    if (extraEl) {
-                        new ApexCharts(extraEl, options).render();
-                    }
-                });
+            if (chartStore.has(id)) {
+                const chart = chartStore.get(id);
+                // Only update color if it changed
+                if (chart.opts && chart.opts.colors && chart.opts.colors[0] !== color) {
+                    chart.updateOptions({ colors: [color] });
+                }
+                // We keep the old data or generate new subtle movement
+                chart.updateSeries([{ data: Array.from({ length: 8 }, () => Math.floor(Math.random() * 40) + 60) }]);
+            } else {
+                const options = {
+                    series: [{ data: Array.from({ length: 8 }, () => Math.floor(Math.random() * 40) + 60) }],
+                    chart: { type: 'area', height: 40, sparkline: { enabled: true }, animations: { enabled: true } },
+                    stroke: { curve: 'smooth', width: 2 },
+                    colors: [color],
+                    fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
+                    tooltip: { enabled: false }
+                };
+                const chart = new ApexCharts(el, options);
+                chart.render();
+                chartStore.set(id, chart);
             }
         });
     }, 100);
@@ -380,6 +616,8 @@ function createAssetCard(view, item) {
     const isUp = change >= 0;
     const sparkId = `spark-${view}-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
 
+    card.classList.add(isUp ? 'bullish' : 'bearish');
+
     card.innerHTML = `
         <header>
             <div class="asset-name">${icon} ${name}</div>
@@ -398,48 +636,57 @@ function createAssetCard(view, item) {
 
 function renderCommodities(grid, data) {
     const categories = {
-        'gold': 'Gold',
-        'metals': 'Precious Metals',
-        'energy': 'Energy',
-        'agri': 'Agriculture',
-        'livestock': 'Livestock'
+        'gold': t('metals'),
+        'metals': t('metals'),
+        'energy': t('energy'),
+        'agri': t('agri'),
+        'livestock': t('livestock')
     };
-
-    grid.innerHTML = '';
 
     Object.entries(categories).forEach(([key, title]) => {
         const items = data.filter(d => d.category === key);
         if (items.length === 0) return;
 
-        const groupWrapper = document.createElement('div');
-        groupWrapper.className = 'commodity-group-box';
+        let groupWrapper = document.getElementById(`group-${key}`);
+        if (!groupWrapper) {
+            groupWrapper = document.createElement('div');
+            groupWrapper.id = `group-${key}`;
+            groupWrapper.className = 'commodity-group-box';
+            groupWrapper.innerHTML = `
+                <div class="category-header"><h3>${title}</h3></div>
+                <div class="grid-layout inner-grid" id="grid-${key}"></div>
+            `;
+            grid.appendChild(groupWrapper);
+        }
 
-        const header = document.createElement('div');
-        header.className = 'category-header';
-        header.innerHTML = `<h3>${t(key === 'gold' ? 'gold_title' : key)}</h3>`;
-        groupWrapper.appendChild(header);
-
-        const innerGrid = document.createElement('div');
-        innerGrid.className = 'grid-layout';
-        groupWrapper.appendChild(innerGrid);
-
+        const innerGrid = groupWrapper.querySelector('.inner-grid');
         items.forEach(item => {
-            if (key === 'gold') {
-                renderGoldCards(innerGrid, item);
+            const cardId = `card-commodities-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
+            let card = document.getElementById(cardId);
+
+            if (card) {
+                updateAssetCard(card, 'commodities', item);
+                // Special case for gold TRY/UAH cards which are rendered inside renderGoldCards
+                if (item.category === 'gold') {
+                    updateGoldCards(item);
+                }
             } else {
-                const card = createCommodityCard(item);
-                innerGrid.appendChild(card);
+                if (item.category === 'gold') {
+                    renderGoldCards(innerGrid, item);
+                } else {
+                    card = createCommodityCard(item);
+                    card.id = cardId;
+                    innerGrid.appendChild(card);
+                }
             }
         });
-
-        grid.appendChild(groupWrapper);
     });
 }
 
 function createCommodityCard(item) {
     const card = document.createElement('div');
     const isUp = item.change >= 0;
-    card.className = 'asset-card card';
+    card.className = `asset-card card ${isUp ? 'bullish' : 'bearish'}`;
     const priceDisplay = item.pricePerGram
         ? `$${item.pricePerGram}/${t('unit_g')}`
         : `$${item.price}/${t(item.unit)}`;
@@ -460,13 +707,30 @@ function createCommodityCard(item) {
     return card;
 }
 
+function updateGoldCards(item) {
+    const cardTRY = document.getElementById('card-commodities-gold-try');
+    const cardUAH = document.getElementById('card-commodities-gold-uah');
+    if (cardTRY) {
+        const priceEl = cardTRY.querySelector('.current-price');
+        if (priceEl) priceEl.innerText = `₺${item.priceInTRY ? (item.priceInTRY / 31.1035).toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : '...'}`;
+    }
+    if (cardUAH) {
+        const priceEl = cardUAH.querySelector('.current-price');
+        if (priceEl) priceEl.innerText = `₴${item.priceInUAH ? (item.priceInUAH / 31.1035).toLocaleString('uk-UA', { maximumFractionDigits: 0 }) : '...'}`;
+    }
+}
+
 function renderGoldCards(grid, item) {
     // 1. Global Gold Card
-    grid.appendChild(createCommodityCard(item));
+    const goldCard = createCommodityCard(item);
+    goldCard.id = `card-commodities-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
+    grid.appendChild(goldCard);
 
     // 2. TRY Card
     const cardTRY = document.createElement('div');
-    cardTRY.className = 'asset-card card';
+    const isUp = item.change >= 0;
+    cardTRY.id = 'card-commodities-gold-try';
+    cardTRY.className = `asset-card card ${isUp ? 'bullish' : 'bearish'}`;
     cardTRY.innerHTML = `
         <header>
             <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/tr.png" style="width:20px"> ${t('altin_try')}</div>
@@ -482,7 +746,8 @@ function renderGoldCards(grid, item) {
 
     // 3. UAH Card
     const cardUAH = document.createElement('div');
-    cardUAH.className = 'asset-card card';
+    cardUAH.id = 'card-commodities-gold-uah';
+    cardUAH.className = `asset-card card ${isUp ? 'bullish' : 'bearish'}`;
     cardUAH.innerHTML = `
         <header>
             <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/ua.png" style="width:20px"> ${t('altin_uah')}</div>
@@ -596,17 +861,66 @@ function openAssetModal(type, item) {
     drawChart(isUp);
 }
 
-function drawChart(isUp) {
+function drawChart(isUp, priceData = null) {
     const el = document.getElementById('detail-chart');
     if (!el) return;
     el.innerHTML = '';
 
+    // Generate more realistic data points
+    const basePrices = priceData || Array.from({ length: 24 }, (_, i) => {
+        const trend = isUp ? 1 : -1;
+        return 100 + (trend * i * 0.5) + (Math.random() * 5);
+    });
+
     const options = {
-        series: [{ data: Array.from({ length: 12 }, () => Math.floor(Math.random() * 40) + 60) }],
-        chart: { type: 'area', height: 200, sparkline: { enabled: true }, animations: { enabled: false } },
+        series: [{
+            name: 'Price',
+            data: basePrices.map(p => parseFloat(p.toFixed(2)))
+        }],
+        chart: {
+            type: 'area',
+            height: 250,
+            sparkline: { enabled: false },
+            toolbar: { show: false },
+            animations: { enabled: true, easing: 'easeinout', speed: 800 }
+        },
         stroke: { curve: 'smooth', width: 3 },
         colors: [isUp ? '#00c853' : '#ff3d00'],
-        fill: { type: 'gradient', gradient: { opacityFrom: 0.4, opacityTo: 0 } }
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.45,
+                opacityTo: 0.05,
+                stops: [20, 100]
+            }
+        },
+        xaxis: {
+            labels: { show: false },
+            axisBorder: { show: false },
+            axisTicks: { show: false }
+        },
+        yaxis: {
+            show: true,
+            labels: {
+                style: { colors: 'var(--text-dim)', fontSize: '10px' },
+                formatter: (val) => `$${val.toLocaleString()}`
+            }
+        },
+        grid: {
+            show: true,
+            borderColor: 'rgba(255,255,255,0.05)',
+            strokeDashArray: 4
+        },
+        tooltip: {
+            theme: 'dark',
+            x: { show: false },
+            y: {
+                title: { formatter: () => '' },
+                formatter: (val) => `<span style="font-weight:700; color:#fff">$${val.toLocaleString()}</span>`
+            },
+            marker: { show: false }
+        }
     };
 
     if (window.ApexCharts) {

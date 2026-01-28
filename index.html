@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CoinTelegraph | Pro Market Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=4.1">
+    <link rel="stylesheet" href="style.css?v=5.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -41,9 +41,20 @@
 
         <main class="main-content">
             <header class="top-bar">
+                <div class="refresh-progress" id="refresh-progress"></div>
                 <div class="title-group">
                     <h1 id="page-title">Market Overview</h1>
                     <div id="date-display" class="clock">--:--:--</div>
+                </div>
+
+                <div class="refresh-meta">
+                    <div class="refresh-info">
+                        <span id="label-last-updated">Last Updated</span>
+                        <span class="refresh-timer" id="refresh-timer">Next update: --s</span>
+                    </div>
+                    <button id="manual-refresh" class="btn-refresh" title="Refresh Now">
+                        <i>🔄</i>
+                    </button>
                 </div>
 
                 <div class="search-bar">
@@ -53,70 +64,72 @@
             </header>
 
             <div id="view-container" class="view-container">
-                <!-- Views will be managed by app.js -->
-                <div id="view-dashboard" class="view-section active">
-                    <div class="grid-layout" id="crypto-grid">
-                        <div class="skeleton-loader">Loading Assets...</div>
-                    </div>
-                </div>
-
-                <div id="view-stocks" class="view-section hidden">
-                    <div class="grid-layout" id="stocks-grid"></div>
-                </div>
-
-                <div id="view-commodities" class="view-section hidden">
-                    <div class="commodities-layout" id="commodities-grid"></div>
-                </div>
-
-                <div id="view-forex" class="view-section hidden">
-                    <div class="forex-panel">
-                        <div class="converter-box glass-card">
-                            <div class="converter-header">
-                                <i class="icon-swap">🔄</i>
-                                <h3 id="conv-title">Currency Converter</h3>
-                            </div>
-                            <div class="conv-controls">
-                                <div class="input-group">
-                                    <label for="conv-amount" id="label-amount">Amount</label>
-                                    <input type="number" id="conv-amount" value="1" placeholder="0.00">
-                                </div>
-                                <div class="select-group">
-                                    <div class="currency-select">
-                                        <select id="conv-from"></select>
-                                    </div>
-                                    <button id="conv-swap" title="Swap Currencies">⇄</button>
-                                    <div class="currency-select">
-                                        <select id="conv-to"></select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="conv-result-area">
-                                <div class="result-label" id="res-label">Result</div>
-                                <div class="result-main">
-                                    <span id="conv-res-val">0.00</span>
-                                    <small id="conv-info"></small>
-                                </div>
-                            </div>
+                <div id="views-slider" class="views-slider">
+                    <!-- Views will be managed by app.js -->
+                    <div id="view-dashboard" class="view-section">
+                        <div class="grid-layout" id="crypto-grid">
+                            <div class="skeleton-loader">Loading Assets...</div>
                         </div>
-                        <div class="grid-layout" id="forex-grid"></div>
                     </div>
-                </div>
 
-                <div id="view-news" class="view-section hidden">
-                    <div id="news-feed" class="news-feed"></div>
-                </div>
+                    <div id="view-stocks" class="view-section">
+                        <div class="grid-layout" id="stocks-grid"></div>
+                    </div>
 
-                <div id="view-settings" class="view-section hidden">
-                    <div class="card settings-card">
-                        <h3 id="set-title">Preferences</h3>
-                        <div class="control-group">
-                            <label id="label-lang">Language</label>
-                            <select id="lang-select">
-                                <option value="tr">Türkçe (TR)</option>
-                                <option value="en" selected>English (EN)</option>
-                                <option value="ua">Українська (UA)</option>
-                                <option value="de">Deutsch (DE)</option>
-                            </select>
+                    <div id="view-commodities" class="view-section">
+                        <div class="commodities-layout" id="commodities-grid"></div>
+                    </div>
+
+                    <div id="view-forex" class="view-section">
+                        <div class="forex-panel">
+                            <div class="converter-box glass-card">
+                                <div class="converter-header">
+                                    <i class="icon-swap">🔄</i>
+                                    <h3 id="conv-title">Currency Converter</h3>
+                                </div>
+                                <div class="conv-controls">
+                                    <div class="input-group">
+                                        <label for="conv-amount" id="label-amount">Amount</label>
+                                        <input type="number" id="conv-amount" value="1" placeholder="0.00">
+                                    </div>
+                                    <div class="select-group">
+                                        <div class="currency-select">
+                                            <select id="conv-from"></select>
+                                        </div>
+                                        <button id="conv-swap" title="Swap Currencies">⇄</button>
+                                        <div class="currency-select">
+                                            <select id="conv-to"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="conv-result-area">
+                                    <div class="result-label" id="res-label">Result</div>
+                                    <div class="result-main">
+                                        <span id="conv-res-val">0.00</span>
+                                        <small id="conv-info"></small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid-layout" id="forex-grid"></div>
+                        </div>
+                    </div>
+
+                    <div id="view-news" class="view-section">
+                        <div id="news-feed" class="news-feed"></div>
+                    </div>
+
+                    <div id="view-settings" class="view-section">
+                        <div class="card settings-card">
+                            <h3 id="set-title">Preferences</h3>
+                            <div class="control-group">
+                                <label id="label-lang">Language</label>
+                                <select id="lang-select">
+                                    <option value="tr">Türkçe (TR)</option>
+                                    <option value="en" selected>English (EN)</option>
+                                    <option value="ua">Українська (UA)</option>
+                                    <option value="de">Deutsch (DE)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -128,7 +141,7 @@
                     <h3>Loading Stall Detected</h3>
                     <p>The system is having trouble fetching real-time data.</p>
                     <button id="btn-rescue">Force System Rebuild</button>
-                    <small>Version 4.0 - Recovery Console</small>
+                    <small>Version 5.0 - Pro Recovery Console</small>
                 </div>
             </div>
         </main>
@@ -157,9 +170,9 @@
     <div id="toast-container"></div>
 
     <!-- Scripts - DEFER for performance, correct order for dependencies -->
-    <script src="translations.js?v=4.0"></script>
-    <script src="icons.js?v=4.0"></script>
-    <script src="app.js?v=4.0"></script>
+    <script src="translations.js?v=5.0"></script>
+    <script src="icons.js?v=5.0"></script>
+    <script src="app.js?v=5.0"></script>
 </body>
 
 </html>

@@ -57,7 +57,10 @@ const translations = {
         'Cocoa': 'Kakao', 'Rice': 'Pirinç', 'Live Cattle': 'Canlı Hayvan', 'Lean Hogs': 'Yağsız Domuz',
         // Units
         'oz': 'ons', 'ton': 'ton', 'barrel': 'varil', 'MMBtu': 'MMBtu', 'gallon': 'galon', 'lb': 'lb',
-        'bushel': 'bushel', 'cwt': 'cwt', 'unit_g': 'gr'
+        'bushel': 'bushel', 'cwt': 'cwt',
+        'unit_g': 'gr',
+        'last_updated': 'Son Güncelleme',
+        'next_update': 'Sıralı Güncelleme'
     },
     en: {
         'dashboard': 'Market Overview',
@@ -113,7 +116,10 @@ const translations = {
         'Cocoa': 'Cocoa', 'Rice': 'Rice', 'Live Cattle': 'Live Cattle', 'Lean Hogs': 'Lean Hogs',
         // Units
         'oz': 'oz', 'ton': 'ton', 'barrel': 'barrel', 'MMBtu': 'MMBtu', 'gallon': 'gallon', 'lb': 'lb',
-        'bushel': 'bushel', 'cwt': 'cwt', 'unit_g': 'g'
+        'bushel': 'bushel', 'cwt': 'cwt',
+        'unit_g': 'g',
+        'last_updated': 'Last Updated',
+        'next_update': 'Next Update'
     },
     ua: {
         'dashboard': 'Огляд ринку',
@@ -169,7 +175,10 @@ const translations = {
         'Cocoa': 'Какао', 'Rice': 'Рис', 'Live Cattle': 'Жива худоба', 'Lean Hogs': 'Пісна свинина',
         // Units
         'oz': 'унція', 'ton': 'тонна', 'barrel': 'барель', 'MMBtu': 'MMBtu', 'gallon': 'галон', 'lb': 'фунт',
-        'bushel': 'бушель', 'cwt': 'центнер', 'unit_g': 'г'
+        'bushel': 'бушель', 'cwt': 'центнер',
+        'unit_g': 'г',
+        'last_updated': 'Останнє Оновлення',
+        'next_update': 'Наступне Оновлення'
     },
     de: {
         'dashboard': 'Marktübersicht',
@@ -218,14 +227,17 @@ const translations = {
         'ADBE': 'Adobe', 'PYPL': 'PayPal', 'SHOP': 'Shopify', 'UBER': 'Uber', 'ABNB': 'Airbnb',
         'COIN': 'Coinbase', 'MSTR': 'MicroStrategy', 'QCOM': 'Qualcomm', 'TXN': 'Texas Instruments',
         // Commodities
-        'Gold': 'Gold', 'Silver': 'Silber', 'Platinum': 'Platin', 'Palladium': 'Palladium', 'Copper': 'Kupfer',
+        'Gold': 'Gold', 'Silver': 'Silber', 'Platinum': 'Platin', 'Palladium': 'Paladyum', 'Copper': 'Kupfer',
         'Crude Oil (WTI)': 'Rohöl (WTI)', 'Brent Oil': 'Brent Öl', 'Natural Gas': 'Erdgas',
         'Heating Oil': 'Heizöl', 'Gasoline': 'Benzin', 'Wheat': 'Weizen', 'Corn': 'Mais',
         'Soybeans': 'Sojabohnen', 'Coffee': 'Kaffee', 'Sugar': 'Zucker', 'Cotton': 'Baumwolle',
         'Cocoa': 'Kakao', 'Rice': 'Reis', 'Live Cattle': 'Lebendvieh', 'Lean Hogs': 'Mastschweine',
         // Units
         'oz': 'oz', 'ton': 't', 'barrel': 'Fass', 'MMBtu': 'MMBtu', 'gallon': 'Gallone', 'lb': 'Pfund',
-        'bushel': 'Scheffel', 'cwt': 'Zentner', 'unit_g': 'g'
+        'bushel': 'Scheffel', 'cwt': 'Zentner',
+        'unit_g': 'g',
+        'last_updated': 'Zuletzt Aktualisiert',
+        'next_update': 'Nächstes Update'
     }
 };
 
