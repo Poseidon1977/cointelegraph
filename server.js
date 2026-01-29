@@ -18,7 +18,7 @@ app.use(express.static(__dirname));
 
 // Cache to prevent hitting rate limits too fast (simple in-memory)
 const cache = new Map();
-const CACHE_DURATION = 10000; // 10 seconds (PWA standard v5.0)
+const CACHE_DURATION = 5000; // 5 seconds (Reduced for higher update frequency)
 
 // Price Smoothing Function: Prevents micro-jitters (< 0.02% change)
 const previousPrices = new Map();
@@ -282,63 +282,65 @@ app.get('/api/commodities', async (req, res) => {
         let usdToTry = 34.50;
         let usdToUah = 41.00;
 
-        // Try getting real Gold/Silver prices from Finnhub via Forex endpoint
-        let goldPrice = 2350; // Conservative 2024/2025 spot price
-        let silverPrice = 28.50; // Conservative 2024/2025 spot price
-        let goldChange = 0.25;
-        let silverChange = -0.05;
+        // Commodity Symbol Map (Finnhub OANDA)
+        const commoditySymbols = {
+            'Gold': 'OANDA:XAU_USD',
+            'Silver': 'OANDA:XAG_USD',
+            'Platinum': 'OANDA:XPT_USD',
+            'Palladium': 'OANDA:XPD_USD',
+            'Copper': 'OANDA:COPPER_USD',
+            'Crude Oil (WTI)': 'OANDA:WTICO_USD',
+            'Brent Oil': 'OANDA:BCO_USD',
+            'Natural Gas': 'OANDA:NATGAS_USD'
+        };
 
+        const commodityInfo = {
+            'Gold': { category: 'gold', unit: 'oz', basePrice: 2700 }, // Fallback prices
+            'Silver': { category: 'metals', unit: 'oz', basePrice: 31 },
+            'Platinum': { category: 'metals', unit: 'oz', basePrice: 1000 },
+            'Palladium': { category: 'metals', unit: 'oz', basePrice: 1050 },
+            'Copper': { category: 'metals', unit: 'ton', basePrice: 9000 },
+            'Crude Oil (WTI)': { category: 'energy', unit: 'barrel', basePrice: 75.20 },
+            'Brent Oil': { category: 'energy', unit: 'barrel', basePrice: 80.50 },
+            'Natural Gas': { category: 'energy', unit: 'MMBtu', basePrice: 2.50 },
+            'Wheat': { category: 'agri', unit: 'bushel', basePrice: 6.00 },
+            'Coffee': { category: 'agri', unit: 'lb', basePrice: 2.10 },
+            'Sugar': { category: 'agri', unit: 'lb', basePrice: 0.20 },
+            'Cotton': { category: 'agri', unit: 'lb', basePrice: 0.75 },
+            'Cocoa': { category: 'agri', unit: 'ton', basePrice: 8500 }
+        };
+
+        // Fetch Live Data
+        let livePrices = {};
         try {
-            const [goldRes, silverRes, forexRes] = await Promise.all([
-                axios.get(`https://finnhub.io/api/v1/quote?symbol=OANDA:XAU_USD&token=${FINNHUB_KEY}`, { timeout: 3000 }).catch(() => null),
-                axios.get(`https://finnhub.io/api/v1/quote?symbol=OANDA:XAG_USD&token=${FINNHUB_KEY}`, { timeout: 3000 }).catch(() => null),
-                axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 3000 }).catch(() => null)
-            ]);
+            const fetchPromises = Object.entries(commoditySymbols).map(([name, symbol]) =>
+                axios.get(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`, { timeout: 3000 })
+                    .then(r => ({ name, price: r.data.c, change: r.data.dp }))
+                    .catch(() => ({ name, price: null, change: null }))
+            );
 
-            if (goldRes?.data?.c) {
-                goldPrice = goldRes.data.c;
-                goldChange = goldRes.data.dp || 0;
-            }
-            if (silverRes?.data?.c) {
-                silverPrice = silverRes.data.c;
-                silverChange = silverRes.data.dp || 0;
-            }
+            const forexPromise = axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 3000 }).catch(() => null);
+
+            const [results, forexRes] = await Promise.all([Promise.all(fetchPromises), forexPromise]);
+
+            results.forEach(r => { if (r.price) livePrices[r.name] = { price: r.price, change: r.change }; });
             if (forexRes?.data?.rates) {
                 usdToTry = forexRes.data.rates.TRY || usdToTry;
                 usdToUah = forexRes.data.rates.UAH || usdToUah;
             }
-
-            // Real-world Sanity Check: Tightened for better stability
-            if (goldPrice > 2600) goldPrice = 2350 + (Math.random() * 10);
-            if (silverPrice > 40) silverPrice = 28.5 + (Math.random() * 0.5);
         } catch (e) {
-            console.warn('Real-time commodity fetch failed, using updated simulations');
+            console.warn('[Commodities] Live fetch partially failed');
         }
 
-        const commodities = {
-            'Gold': { basePrice: goldPrice, change: goldChange, unit: 'oz', category: 'gold' },
-            'Silver': { basePrice: silverPrice, change: silverChange, unit: 'oz', category: 'metals' },
-            'Platinum': { basePrice: 950, unit: 'oz', variation: 20, category: 'metals' },
-            'Palladium': { basePrice: 1020, unit: 'oz', variation: 30, category: 'metals' },
-            'Copper': { basePrice: 8500, unit: 'ton', variation: 150, category: 'metals' },
-            'Crude Oil (WTI)': { basePrice: 78.50, unit: 'barrel', variation: 2, category: 'energy' },
-            'Brent Oil': { basePrice: 83.20, unit: 'barrel', variation: 2, category: 'energy' },
-            'Natural Gas': { basePrice: 2.85, unit: 'MMBtu', variation: 0.2, category: 'energy' },
-            'Wheat': { basePrice: 6.20, unit: 'bushel', variation: 0.3, category: 'agri' },
-            'Coffee': { basePrice: 1.85, unit: 'lb', variation: 0.1, category: 'agri' },
-            'Sugar': { basePrice: 0.22, unit: 'lb', variation: 0.02, category: 'agri' },
-            'Cotton': { basePrice: 0.82, unit: 'lb', variation: 0.05, category: 'agri' },
-            'Cocoa': { basePrice: 4250, unit: 'ton', variation: 150, category: 'agri' }
-        };
+        const data = Object.entries(commodityInfo).map(([name, info]) => {
+            const live = livePrices[name];
+            let price = live ? live.price : info.basePrice;
+            let change = live ? live.change : (Math.random() - 0.5) * 0.5;
 
-        const data = Object.entries(commodities).map(([name, info]) => {
-            let price = info.basePrice;
-            let change = info.change;
-
-            if (change === undefined) {
-                const fluctuation = (Math.random() - 0.5) * 0.002; // Reduced fluctuation from 0.005
+            // Simulated movement for those without live data
+            if (!live) {
+                const fluctuation = (Math.random() - 0.5) * 0.001;
                 price = info.basePrice * (1 + fluctuation);
-                change = (Math.random() - 0.5) * 1; // Reduced change range from 2
             }
 
             let result = {
@@ -353,10 +355,22 @@ app.get('/api/commodities', async (req, res) => {
             if ((info.category === 'metals' || info.category === 'gold') && info.unit === 'oz') {
                 result.pricePerGram = parseFloat((price / GRAMS_PER_OUNCE).toFixed(2));
                 if (name === 'Gold') {
+                    const gramPriceTRY = price * usdToTry / GRAMS_PER_OUNCE;
+                    const gramPriceUAH = price * usdToUah / GRAMS_PER_OUNCE;
+
                     result.priceInTRY = parseFloat((price * usdToTry).toFixed(2));
                     result.priceInUAH = parseFloat((price * usdToUah).toFixed(2));
-                    result.pricePerGramTRY = parseFloat((price * usdToTry / GRAMS_PER_OUNCE).toFixed(2));
-                    result.pricePerGramUAH = parseFloat((price * usdToUah / GRAMS_PER_OUNCE).toFixed(2));
+                    result.pricePerGramTRY = parseFloat(gramPriceTRY.toFixed(2));
+                    result.pricePerGramUAH = parseFloat(gramPriceUAH.toFixed(2));
+
+                    result.goldGroups = [
+                        { name: 'Gold (24K)', price: gramPriceTRY, unit: 'gr' },
+                        { name: 'Gold (22K)', price: gramPriceTRY * 0.916, unit: 'gr' },
+                        { name: 'Gold (14K)', price: gramPriceTRY * 0.585, unit: 'gr' },
+                        { name: 'Quarter Gold', price: gramPriceTRY * 1.75, unit: 'pcs' },
+                        { name: 'Half Gold', price: gramPriceTRY * 3.50, unit: 'pcs' },
+                        { name: 'Full Gold', price: gramPriceTRY * 7.01, unit: 'pcs' }
+                    ].map(g => ({ ...g, price: parseFloat(g.price.toFixed(2)) }));
                 }
             }
             return result;

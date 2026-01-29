@@ -17,7 +17,7 @@ const config = {
         'KO', 'MCD', 'DIS', 'V', 'JPM', 'WMT', 'PG', 'NKE', 'ORCL', 'CRM', 'ADBE',
         'PYPL', 'SHOP', 'UBER', 'ABNB', 'COIN', 'MSTR', 'QCOM', 'TXN'
     ],
-    refreshInterval: 10000, // 10 seconds
+    refreshInterval: 5000, // 5 seconds
     viewOrder: ['dashboard', 'stocks', 'commodities', 'forex', 'news', 'settings']
 };
 
@@ -712,21 +712,36 @@ function updateGoldCards(item) {
     const cardUAH = document.getElementById('card-commodities-gold-uah');
     if (cardTRY) {
         const priceEl = cardTRY.querySelector('.current-price');
-        if (priceEl) priceEl.innerText = `₺${item.priceInTRY ? (item.priceInTRY / 31.1035).toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : '...'}`;
+        if (priceEl) priceEl.innerText = `₺${item.pricePerGramTRY ? item.pricePerGramTRY.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : '...'}`;
     }
     if (cardUAH) {
         const priceEl = cardUAH.querySelector('.current-price');
-        if (priceEl) priceEl.innerText = `₴${item.priceInUAH ? (item.priceInUAH / 31.1035).toLocaleString('uk-UA', { maximumFractionDigits: 0 }) : '...'}`;
+        if (priceEl) priceEl.innerText = `₴${item.pricePerGramUAH ? item.pricePerGramUAH.toLocaleString('uk-UA', { maximumFractionDigits: 0 }) : '...'}`;
+    }
+
+    // Update Gold Groups if they exist
+    if (item.goldGroups) {
+        item.goldGroups.forEach(group => {
+            const groupCardId = `card-commodities-${group.name.replace(/[^a-z0-9]/gi, '-')}`;
+            const groupCard = document.getElementById(groupCardId);
+            if (groupCard) {
+                const priceEl = groupCard.querySelector('.current-price');
+                if (priceEl) {
+                    const priceFormatted = group.price.toLocaleString('tr-TR', { maximumFractionDigits: 0 });
+                    priceEl.innerText = `₺${priceFormatted}`;
+                }
+            }
+        });
     }
 }
 
 function renderGoldCards(grid, item) {
-    // 1. Global Gold Card
+    // 1. Global Gold Card (Spot oz)
     const goldCard = createCommodityCard(item);
     goldCard.id = `card-commodities-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
     grid.appendChild(goldCard);
 
-    // 2. TRY Card
+    // 2. TRY Gram Card (24K)
     const cardTRY = document.createElement('div');
     const isUp = item.change >= 0;
     cardTRY.id = 'card-commodities-gold-try';
@@ -736,15 +751,14 @@ function renderGoldCards(grid, item) {
             <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/tr.png" style="width:20px"> ${t('altin_try')}</div>
         </header>
         <div class="price-box">
-            <div class="current-price" style="color:var(--warning)">₺${item.priceInTRY ? (item.priceInTRY / 31.1035).toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : '...'}</div>
+            <div class="current-price" style="color:var(--warning)">₺${item.pricePerGramTRY ? item.pricePerGramTRY.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : '...'}</div>
             <div class="asset-symbol">${t('gram_altin_try')}</div>
         </div>
-        <div id="spark-commodities-gold-try" class="mini-chart"></div>
-    `;
+        <div id="spark-commodities-gold-try" class="mini-chart"></div>`;
     cardTRY.onclick = () => openAssetModal('commodities', item);
     grid.appendChild(cardTRY);
 
-    // 3. UAH Card
+    // 3. UAH Gram Card
     const cardUAH = document.createElement('div');
     cardUAH.id = 'card-commodities-gold-uah';
     cardUAH.className = `asset-card card ${isUp ? 'bullish' : 'bearish'}`;
@@ -753,13 +767,35 @@ function renderGoldCards(grid, item) {
             <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/ua.png" style="width:20px"> ${t('altin_uah')}</div>
         </header>
         <div class="price-box">
-            <div class="current-price" style="color:var(--accent)">₴${item.priceInUAH ? (item.priceInUAH / 31.1035).toLocaleString('uk-UA', { maximumFractionDigits: 0 }) : '...'}</div>
+            <div class="current-price" style="color:var(--accent)">₴${item.pricePerGramUAH ? item.pricePerGramUAH.toLocaleString('uk-UA', { maximumFractionDigits: 0 }) : '...'}</div>
             <div class="asset-symbol">${t('gram_altin_uah')}</div>
         </div>
-        <div id="spark-commodities-gold-uah" class="mini-chart"></div>
-    `;
+        <div id="spark-commodities-gold-uah" class="mini-chart"></div>`;
     cardUAH.onclick = () => openAssetModal('commodities', item);
     grid.appendChild(cardUAH);
+
+    // 4. Render Gold Groups (22K, 14K, Quarter, etc.)
+    if (item.goldGroups) {
+        item.goldGroups.forEach(group => {
+            const card = document.createElement('div');
+            card.id = `card-commodities-${group.name.replace(/[^a-z0-9]/gi, '-')}`;
+            card.className = `asset-card card ${isUp ? 'bullish' : 'bearish'}`;
+            const priceFormatted = group.price.toLocaleString('tr-TR', { maximumFractionDigits: 0 });
+            const sparkId = `spark-commodities-${group.name.replace(/[^a-z0-9]/gi, '-')}`;
+
+            card.innerHTML = `
+                <header>
+                    <div class="asset-name">${getCommodityIcon('Gold')} ${t(group.name)}</div>
+                </header>
+                <div class="price-box">
+                    <div class="current-price" style="color:var(--warning)">₺${priceFormatted}</div>
+                    <div class="asset-symbol">${t('unit_' + group.unit)}</div>
+                </div>
+                <div id="${sparkId}" class="mini-chart"></div>`;
+            card.onclick = () => openAssetModal('commodities', item);
+            grid.appendChild(card);
+        });
+    }
 }
 
 // --- Converter Logic ---
