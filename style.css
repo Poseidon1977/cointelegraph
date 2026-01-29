@@ -58,19 +58,18 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: calc(75px + env(safe-area-inset-bottom));
+    height: calc(60px + env(safe-area-inset-bottom));
     background: transparent;
-    /* Max transparency - No color */
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    /* Center the symbols */
     padding: 0 20px env(safe-area-inset-bottom) 20px;
     z-index: 1000;
     pointer-events: none;
-    /* Let clicks pass through the bar wrapper */
 }
 
 .sidebar>* {
@@ -79,10 +78,8 @@ body {
 }
 
 .brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 0;
+    display: none;
+    /* Removed as requested */
 }
 
 .logo-icon {
@@ -138,15 +135,8 @@ body {
 }
 
 .market-badge {
-    margin-top: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: rgba(0, 200, 83, 0.05);
-    border-radius: var(--radius);
-    font-size: 0.75rem;
-    color: var(--success);
+    display: none;
+    /* Removed as requested */
 }
 
 .dot.online {
