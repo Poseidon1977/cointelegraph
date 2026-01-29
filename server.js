@@ -98,7 +98,7 @@ const CONFIG = {
         // Global
         'USD/CNY': 'OANDA:USD_CNY',
         'USD/TRY': 'OANDA:USD_TRY',
-        'USD/UAH': 'OANDA:USD_UAH', // Added for Live Gold UAH
+        'USD/UAH': 'OANDA:USD_UAH',
         'USD/MXN': 'OANDA:USD_MXN',
         'USD/ZAR': 'OANDA:USD_ZAR',
         'USD/HKD': 'OANDA:USD_HKD',
@@ -176,8 +176,8 @@ async function startSmartQueue() {
             if (name === 'Gold') {
                 const pricePerGram = raw.price / GRAMS_PER_OUNCE;
                 extra = {
-                    price_gram_try: pricePerGram * tryRate,
-                    price_gram_uah: pricePerGram * uahRate
+                    pricePerGramTRY: pricePerGram * tryRate,
+                    pricePerGramUAH: pricePerGram * uahRate
                 };
             }
 
@@ -214,16 +214,7 @@ async function startSmartQueue() {
             updateCache('stocks', { symbol: sym, price: 215.00, change: 0.5 }, 'symbol');
         });
 
-        // Seed Commodities
-        Object.keys(CONFIG.commoditySymbols).forEach(name => {
-            let p = 50.00;
-            if (name === 'Gold') p = 2650;
-            if (name === 'Silver') p = 31.50;
-            if (name === 'Crude Oil (WTI)') p = 75.00;
-            updateCache('commodities-raw', { name, price: p, change: 0.2 }, 'name');
-        });
-
-        // Seed Forex
+        // 1. SEED FOREX FIRST (Crucial for Gold calculations)
         Object.keys(CONFIG.forexSymbols).forEach(name => {
             let p = 1.00;
             if (name.includes('JPY')) p = 155.00;
@@ -233,6 +224,16 @@ async function startSmartQueue() {
             if (name === 'USD/UAH') p = 41.60;
             updateCache('forex', { symbol: name, price: p, change: 0.1 }, 'symbol');
         });
+
+        // 2. SEED COMMODITIES (Now has access to Forex rates)
+        Object.keys(CONFIG.commoditySymbols).forEach(name => {
+            let p = 50.00;
+            if (name === 'Gold') p = 2650;
+            if (name === 'Silver') p = 31.50;
+            if (name === 'Crude Oil (WTI)') p = 75.00;
+            updateCache('commodities-raw', { name, price: p, change: 0.2 }, 'name');
+        });
+
         console.log('🌱 Cache Seeded.');
     }
 
