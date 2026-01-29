@@ -115,9 +115,14 @@ app.get('/api/forex', async (req, res) => {
         if (cached) return res.json(cached);
         const r = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 5000 });
         const rates = r.data.rates;
-        const data = Object.entries(rates).map(([curr, val]) => ({
-            symbol: `USD/${curr}`, price: parseFloat(val.toFixed(4)), change: (Math.random() - 0.5) * 0.2
-        })).filter(x => ['EUR', 'GBP', 'TRY', 'UAH', 'JPY'].some(c => x.symbol.includes(c)));
+        const data = Object.entries(rates)
+            .filter(([curr]) => curr !== 'USD')
+            .map(([curr, val]) => ({
+                symbol: `USD/${curr}`,
+                price: parseFloat(val.toFixed(4)),
+                change: parseFloat(((Math.random() - 0.5) * 0.2).toFixed(2))
+            }))
+            .sort((a, b) => a.symbol.localeCompare(b.symbol));
         cache.set('forex', { data, timestamp: Date.now() });
         res.json(data);
     } catch (e) { res.json([]); }
