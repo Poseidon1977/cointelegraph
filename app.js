@@ -513,11 +513,17 @@ function renderView(view, data) {
         grid.appendChild(fragment);
     }
 
-    // Remove cards that are no longer in data
+    // STABILITY FIX: Do NOT remove cards that are missing from this specific snapshot.
+    // Finnhub/API might return partial data or fail temporarily.
+    // We only want to ADD or UPDATE cards, never delete them during a live session to prevent "flickering".
+
+    // Legacy removal code commented out for stability:
+    /*
     const activeIds = data.map(item => `card-${view}-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`);
     grid.querySelectorAll('.asset-card').forEach(el => {
         if (!activeIds.includes(el.id)) el.remove();
     });
+    */
 
     renderSparklines(view, data);
 }
