@@ -295,7 +295,7 @@ app.get('/api/commodities', async (req, res) => {
         };
 
         const commodityInfo = {
-            'Gold': { category: 'gold', unit: 'oz', basePrice: 5565.40 }, // Corrected 2026 Spot
+            'Gold': { category: 'metals', unit: 'oz', basePrice: 5565.40 }, // Changed to metals
             'Silver': { category: 'metals', unit: 'oz', basePrice: 45.50 }, // Corrected 2026 Spot
             'Platinum': { category: 'metals', unit: 'oz', basePrice: 1200 },
             'Palladium': { category: 'metals', unit: 'oz', basePrice: 1300 },
@@ -352,36 +352,19 @@ app.get('/api/commodities', async (req, res) => {
                 category: info.category
             };
 
-            if ((info.category === 'metals' || info.category === 'gold') && info.unit === 'oz') {
-                result.pricePerGram = parseFloat((price / GRAMS_PER_OUNCE).toFixed(2));
-                if (name === 'Gold') {
-                    const gramPriceTRY = price * usdToTry / GRAMS_PER_OUNCE;
-                    const gramPriceUAH = price * usdToUah / GRAMS_PER_OUNCE;
-
-                    result.priceInTRY = parseFloat((price * usdToTry).toFixed(2));
-                    result.priceInUAH = parseFloat((price * usdToUah).toFixed(2));
-                    result.pricePerGramTRY = parseFloat(gramPriceTRY.toFixed(2));
-                    result.pricePerGramUAH = parseFloat(gramPriceUAH.toFixed(2));
-
-                    result.goldGroups = [
-                        { name: 'Gold (24K)', price: gramPriceTRY, unit: 'gr' },
-                        { name: 'Gold (22K)', price: gramPriceTRY * 0.916, unit: 'gr' },
-                        { name: 'Gold (14K)', price: gramPriceTRY * 0.585, unit: 'gr' },
-                        { name: 'Quarter Gold', price: gramPriceTRY * 1.75, unit: 'pcs' },
-                        { name: 'Half Gold', price: gramPriceTRY * 3.50, unit: 'pcs' },
-                        { name: 'Full Gold', price: gramPriceTRY * 7.01, unit: 'pcs' }
-                    ].map(g => ({ ...g, price: parseFloat(g.price.toFixed(2)) }));
-                }
+            result.pricePerGramTRY = parseFloat(gramPriceTRY.toFixed(2));
+            result.pricePerGramUAH = parseFloat(gramPriceUAH.toFixed(2));
+        }
             }
             return result;
-        });
+});
 
-        cache.set(cacheKey, { data: data, timestamp: Date.now() });
-        res.json(data);
+cache.set(cacheKey, { data: data, timestamp: Date.now() });
+res.json(data);
     } catch (e) {
-        console.error('Commodities error:', e.message);
-        res.status(500).json({ error: 'Failed to fetch commodities data' });
-    }
+    console.error('Commodities error:', e.message);
+    res.status(500).json({ error: 'Failed to fetch commodities data' });
+}
 });
 
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Pro Market Terminal v5.0 ready on port ${PORT}`));
