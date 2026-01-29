@@ -241,9 +241,17 @@ async function startSmartQueue() {
         // 2. SEED COMMODITIES (Now has access to Forex rates)
         Object.keys(CONFIG.commoditySymbols).forEach(name => {
             let p = 50.00;
-            if (name === 'Gold') p = 5150; // 2026 Projection
+            if (name === 'Gold') p = 5150;
             if (name === 'Silver') p = 55.50;
+            if (name === 'Platinum') p = 1200.00;
+            if (name === 'Palladium') p = 1150.00;
+            if (name === 'Copper') p = 9500.00;
             if (name === 'Crude Oil (WTI)') p = 85.00;
+            if (name === 'Brent Oil') p = 88.00;
+            if (name === 'Natural Gas') p = 3.50;
+            if (name === 'Wheat') p = 650.00;
+            if (name === 'Corn') p = 480.00;
+            if (name === 'Sugar') p = 22.00;
             updateCache('commodities-raw', { name, price: p, change: 0.2 }, 'name');
         });
 
