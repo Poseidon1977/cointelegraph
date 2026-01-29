@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Satisfy&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Pacifico&display=swap');
 
 :root {
     /* Color Palette - Vibrant Dark */
@@ -24,7 +24,7 @@
     --radius: 16px;
 
     --font: 'Outfit', sans-serif;
-    --font-logo: 'Satisfy', cursive;
+    --font-logo: 'Pacifico', cursive;
 
     --up-glass: rgba(0, 200, 83, 0.15);
     --down-glass: rgba(255, 61, 0, 0.15);
@@ -100,11 +100,11 @@ body {
 
 .brand h2 {
     font-family: var(--font-logo);
-    font-size: 1.8rem;
+    font-size: 1.7rem;
     font-weight: 400;
     margin: 0;
     color: #000 !important;
-    line-height: 1.2;
+    line-height: 1;
 }
 
 .logo-icon {
@@ -881,7 +881,6 @@ body {
         padding: 0 10px;
     }
 
-    .brand,
     .market-badge {
         display: none;
     }
