@@ -13,7 +13,13 @@ const ICON_FALLBACKS = {
 const CRYPTO_MAP = {
     'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'BNB': 'binancecoin',
     'XRP': 'ripple', 'ADA': 'cardano', 'DOGE': 'dogecoin', 'DOT': 'polkadot',
-    'TRX': 'tron', 'MATIC': 'matic-network', 'LINK': 'chainlink', 'AVAX': 'avalanche-2'
+    'TRX': 'tron', 'MATIC': 'polygon', 'LINK': 'chainlink', 'AVAX': 'avalanche',
+    'SHIB': 'shiba-inu', 'TON': 'toncoin', 'XLM': 'stellar', 'SUI': 'sui',
+    'LTC': 'litecoin', 'BCH': 'bitcoin-cash', 'NEAR': 'near-protocol', 'APT': 'aptos',
+    'ATOM': 'cosmos', 'FTM': 'fantom', 'OP': 'optimism', 'ARB': 'arbitrum',
+    'RENDER': 'render-token', 'ICP': 'internet-computer', 'UNI': 'uniswap',
+    'ETC': 'ethereum-classic', 'PEPE': 'pepe', 'BONK': 'bonk', 'FLOKI': 'floki',
+    'SEI': 'sei-network', 'TIA': 'celestia', 'XMR': 'monero', 'OKB': 'okb', 'KAS': 'kaspa'
 };
 
 // Generic URL Generator Wrapper
@@ -22,9 +28,12 @@ function createImgHtml(url, className, fallback) {
 }
 
 function getCryptoIcon(symbol, overrideUrl) {
-    const id = CRYPTO_MAP[symbol?.toUpperCase()];
-    const url = overrideUrl || (id ? `https://assets.coingecko.com/coins/images/1/small/bitcoin.png` : ICON_FALLBACKS.crypto);
-    // Note: The specific coingecko URL above is just a template, in production overrideUrl from API is preferred.
+    const sym = symbol?.toUpperCase();
+    const id = CRYPTO_MAP[sym];
+
+    // Use stable professional logos source primarily
+    const url = overrideUrl || (id ? `https://cryptologos.cc/logos/${id}-${sym.toLowerCase()}-logo.png?v=035` : ICON_FALLBACKS.crypto);
+
     return createImgHtml(url, 'asset-logo', ICON_FALLBACKS.crypto);
 }
 
