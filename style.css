@@ -146,15 +146,47 @@ body {
     /* Box removed */
 }
 
+/* Smart Theme Colors */
+.nav-item[data-view="dashboard"].active {
+    color: #00e5ff;
+    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.5));
+}
+
+.nav-item[data-view="stocks"].active {
+    color: #00c853;
+    /* Green */
+    filter: drop-shadow(0 0 10px rgba(0, 200, 83, 0.5));
+}
+
+.nav-item[data-view="commodities"].active {
+    color: #ffd700;
+    /* Gold */
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+}
+
+.nav-item[data-view="forex"].active {
+    color: #2979ff;
+    /* Blue */
+    filter: drop-shadow(0 0 10px rgba(41, 121, 255, 0.5));
+}
+
+.nav-item[data-view="news"].active {
+    color: #e040fb;
+    /* Purple */
+    filter: drop-shadow(0 0 10px rgba(224, 64, 251, 0.5));
+}
+
+.nav-item[data-view="settings"].active {
+    color: #b0bec5;
+    /* Slate */
+    filter: drop-shadow(0 0 10px rgba(176, 190, 197, 0.5));
+}
+
 .nav-item.active {
-    color: var(--accent);
-    /* Switch to high-visibility Cyan */
     opacity: 1;
     background: transparent !important;
     box-shadow: none !important;
-    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.5));
     transform: scale(1.25);
-    /* Slightly larger persistent active state */
 }
 
 .nav-item.active svg {
