@@ -488,6 +488,7 @@ function renderView(view, data) {
 
     if (view === 'forex' && typeof updateConverter === 'function') {
         updateConverter(data);
+        // Fall through to render cards below the converter
     }
 
     // Optimization: Use DocumentFragment if the grid is mostly empty (first load)
