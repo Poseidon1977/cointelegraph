@@ -148,7 +148,7 @@ async function startSmartQueue() {
     const processCommodities = async () => {
         if (!CACHE_STORE.raw_commodities) return;
 
-        const GRAMS_PER_OUNCE = 31.1035;
+        const GRAMS_PER_OUNCE = 31.1034768; // Investing.com Precision
         const commodityInfo = {
             'Gold': { category: 'metals', unit: 'oz', basePrice: 2000 },
             'Silver': { category: 'metals', unit: 'oz', basePrice: 25 },
@@ -193,11 +193,9 @@ async function startSmartQueue() {
     };
 
     // --- SEED CACHE STRATEGY (Realistic Defaults) ---
-    // Pre-fills data with approx market values so "100" doesn't show up.
     function seedCache() {
         console.log('🌱 Seeding Cache with Realistic Data...');
 
-        // Approx Defaults (Jan 2026)
         const defaults = {
             'bitcoin': 96500, 'ethereum': 3500, 'solana': 148, 'binancecoin': 605,
             'ripple': 2.45, 'cardano': 0.85, 'dogecoin': 0.35, 'polkadot': 7.50
@@ -206,7 +204,7 @@ async function startSmartQueue() {
         // Seed Crypto
         Object.keys(CONFIG.cryptoMapping).forEach(id => {
             const map = CONFIG.cryptoMapping[id];
-            const price = defaults[id] || 15.00; // Fallback
+            const price = defaults[id] || 15.00;
             updateCache('crypto', { id, symbol: map.short.toLowerCase(), name: map.name, current_price: price, price_change_percentage_24h: 0.1 }, 'id');
         });
 
@@ -218,7 +216,7 @@ async function startSmartQueue() {
         // Seed Commodities
         Object.keys(CONFIG.commoditySymbols).forEach(name => {
             let p = 50.00;
-            if (name === 'Gold') p = 2650;
+            if (name === 'Gold') p = 2650; // Spot USD
             if (name === 'Silver') p = 31.50;
             if (name === 'Crude Oil (WTI)') p = 75.00;
             updateCache('commodities-raw', { name, price: p, change: 0.2 }, 'name');
@@ -237,12 +235,11 @@ async function startSmartQueue() {
     }
 
     // --- EXECUTION START ---
-    seedCache(); // 1. Immediate Seed
+    seedCache();
 
     // --- HOT START STRATEGY ---
     async function performHotStart() {
         console.log('🔥 Executing Safe Hot Start...');
-        // Reduced initial burst
         const topCrypto = Object.keys(CONFIG.cryptoMapping).slice(0, 5);
         const topStocks = CONFIG.stocks.slice(0, 3);
         const topCommodities = ['Gold', 'Crude Oil (WTI)'];
@@ -272,7 +269,7 @@ async function startSmartQueue() {
         console.log('✅ Safe Hot Start Complete.');
     }
 
-    await performHotStart(); // 2. Update Top Items
+    await performHotStart();
 
     // 3. Queue Loop
     let taskQueue = [];
