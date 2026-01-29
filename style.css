@@ -17,14 +17,16 @@
     --text-dim: #a0a0ab;
     --text-muted: #64646f;
 
-    --border: rgba(255, 255, 255, 0.08);
-    --shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-    --radius: 12px;
+    --border: rgba(255, 255, 255, 0.05);
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --radius: 16px;
 
     --font: 'Outfit', sans-serif;
 
-    --up-glass: rgba(0, 200, 83, 0.25);
-    --down-glass: rgba(255, 61, 0, 0.25);
+    --up-glass: rgba(0, 200, 83, 0.15);
+    --down-glass: rgba(255, 61, 0, 0.15);
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-blur: blur(15px);
 }
 
 * {
@@ -312,17 +314,14 @@ body {
 .search-bar input {
     width: 100%;
     background: transparent;
-    /* Box removed */
     border: none;
-    /* Border removed */
-    border-bottom: 1px solid var(--border);
-    /* Subtle line only */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding: 10px 0;
     border-radius: 0;
     color: #fff;
     font-family: inherit;
     outline: none;
-    transition: all 0.2s;
+    transition: all 0.3s;
 }
 
 .search-bar input:focus {
@@ -447,11 +446,13 @@ body {
 /* Cards */
 .card,
 .asset-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    padding: 12px;
-    border-radius: 12px;
-    transition: transform 0.2s, background 0.2s, border-color 0.2s;
+    background: var(--glass-bg);
+    border: none;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    padding: 16px;
+    border-radius: var(--radius);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     position: relative;
     min-height: 120px;
@@ -474,15 +475,13 @@ body {
 }
 
 .asset-card.bullish {
-    background: linear-gradient(135deg, var(--bg-card), var(--up-glass));
-    border-color: rgba(0, 200, 83, 0.4);
-    box-shadow: 0 4px 15px rgba(0, 200, 83, 0.1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), var(--up-glass));
+    box-shadow: 0 8px 32px rgba(0, 200, 83, 0.1);
 }
 
 .asset-card.bearish {
-    background: linear-gradient(135deg, var(--bg-card), var(--down-glass));
-    border-color: rgba(255, 61, 0, 0.4);
-    box-shadow: 0 4px 15px rgba(255, 61, 0, 0.1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), var(--down-glass));
+    box-shadow: 0 8px 32px rgba(255, 61, 0, 0.1);
 }
 
 .card:hover,
@@ -765,10 +764,9 @@ body {
 }
 
 .commodity-group-box {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
+    background: transparent;
+    border: none;
+    padding: 10px 0;
 }
 
 .category-header {

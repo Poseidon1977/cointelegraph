@@ -718,7 +718,7 @@ function createCommodityCard(item) {
     card.className = `asset-card card ${isUp ? 'bullish' : 'bearish'}`;
     const priceDisplay = item.pricePerGram
         ? `$${item.pricePerGram}/${t('unit_g')}`
-        : `$${item.price}/${t(item.unit)}`;
+        : `$${item.current_price}/${t(item.unit)}`;
     const sparkId = `spark-commodities-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
 
     card.innerHTML = `
