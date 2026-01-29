@@ -677,22 +677,29 @@ function renderCommodities(grid, data) {
 
         const innerGrid = groupWrapper.querySelector('.inner-grid');
         items.forEach(item => {
+            // SPECIAL HANDLING FOR GOLD (Investing.com Layout)
+            if (item.name === 'Gold') {
+                const cardId = 'card-commodities-gold'; // Known ID
+                let card = document.getElementById(cardId);
+                if (card) {
+                    updateAssetCard(card, 'commodities', item);
+                    updateGoldCards(item);
+                } else {
+                    renderGoldCards(innerGrid, item);
+                }
+                return; // Stop processing Gold
+            }
+
+            // GENERIC HANDLING
             const cardId = `card-commodities-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
             let card = document.getElementById(cardId);
 
             if (card) {
                 updateAssetCard(card, 'commodities', item);
-                if (item.name === 'Gold') {
-                    updateGoldCards(item);
-                }
             } else {
-                if (item.name === 'Gold') {
-                    renderGoldCards(innerGrid, item);
-                } else {
-                    card = createCommodityCard(item);
-                    card.id = cardId;
-                    innerGrid.appendChild(card);
-                }
+                card = createCommodityCard(item);
+                card.id = cardId;
+                innerGrid.appendChild(card);
             }
         });
     });
