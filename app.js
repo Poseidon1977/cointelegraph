@@ -788,22 +788,40 @@ function renderGoldCards(grid, item) {
 function updateConverter(data) {
     const from = document.getElementById('conv-from');
     const to = document.getElementById('conv-to');
-    if (!from || !to || from.options.length > 0) return;
+    if (!from || !to) return;
 
-    // Get unique currencies
-    const currencies = new Set();
+    // 1. Build a Map of "Value in USD" for every currency
+    // Base is USD = 1.0
+    const valuesInUSD = { 'USD': 1.0 };
+
+    // Add all currencies found in data pairs
+    const currencies = new Set(['USD']);
+
     data.forEach(p => {
-        const parts = p.symbol.split('/');
-        parts.forEach(c => currencies.add(c));
+        const [base, quote] = p.symbol.split('/');
+        currencies.add(base);
+        currencies.add(quote);
+
+        // Normalize to USD value
+        // Case 1: EUR/USD = 1.08 -> 1 EUR is 1.08 USD
+        if (quote === 'USD') {
+            valuesInUSD[base] = p.price;
+        }
+        // Case 2: USD/TRY = 34.0 -> 1 TRY is (1/34) USD
+        else if (base === 'USD') {
+            valuesInUSD[quote] = 1 / p.price;
+        }
     });
 
-    Array.from(currencies).sort().forEach(c => {
-        from.add(new Option(c, c));
-        to.add(new Option(c, c));
-    });
-
-    from.value = 'USD';
-    to.value = 'TRY';
+    // Populate Select Options (only if empty)
+    if (from.options.length === 0) {
+        Array.from(currencies).sort().forEach(c => {
+            from.add(new Option(c, c));
+            to.add(new Option(c, c));
+        });
+        from.value = 'USD';
+        to.value = 'TRY';
+    }
 
     const calc = () => {
         const amount = parseFloat(document.getElementById('conv-amount').value) || 0;
@@ -818,24 +836,19 @@ function updateConverter(data) {
             return;
         }
 
-        // Simple cross-rate logic
-        const pair = data.find(p => p.symbol === `${f}/${t}`);
-        const rev = data.find(p => p.symbol === `${t}/${f}`);
+        // Universal Cross-Rate Calculation
+        // Rate (From -> To) = Value(From in USD) / Value(To in USD)
+        const valFrom = valuesInUSD[f];
+        const valTo = valuesInUSD[t];
 
-        let rate = 0;
-        if (pair) {
-            rate = pair.price;
-        } else if (rev) {
-            rate = 1 / rev.price;
-        }
-
-        if (rate) {
+        if (valFrom && valTo) {
+            const rate = valFrom / valTo;
             const result = amount * rate;
             resEl.innerText = result.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             if (infoEl) infoEl.innerText = `1 ${f} = ${rate.toFixed(4)} ${t}`;
         } else {
             resEl.innerText = "---";
-            if (infoEl) infoEl.innerText = "";
+            if (infoEl) infoEl.innerText = "Oran bulunamadı";
         }
     };
 
@@ -848,7 +861,7 @@ function updateConverter(data) {
         to.value = tmp;
         calc();
     };
-    calc();
+    calc(); // Initial calc
 }
 
 // --- Modals & UI Helpers ---
