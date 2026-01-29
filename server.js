@@ -252,7 +252,45 @@ async function startSmartQueue() {
         CACHE_STORE.commodities = processed;
     };
 
+    // --- HOT START STRATEGY ---
+    // Immediate "Burst" Fetch for Top Assets to populate UI instantly
+    // We ignore rate limits for this one-time burst (cached budget)
+    async function performHotStart() {
+        console.log('🔥 Executing Hot Start...');
+        const topCrypto = Object.keys(CONFIG.cryptoMapping).slice(0, 15);
+        const topStocks = CONFIG.stocks.slice(0, 10);
+        const topCommodities = Object.keys(CONFIG.commoditySymbols).slice(0, 5);
+
+        // Parallel Burst
+        await Promise.all([
+            ...topCrypto.map(async id => {
+                try {
+                    const map = CONFIG.cryptoMapping[id];
+                    const r = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${map.sym}&token=${FINNHUB_KEY}`, { timeout: 3000 });
+                    if (r.data.c) updateCache('crypto', { id, symbol: map.short.toLowerCase(), name: map.name, current_price: r.data.c, price_change_percentage_24h: r.data.dp }, 'id');
+                } catch (e) { }
+            }),
+            ...topStocks.map(async sym => {
+                try {
+                    const r = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`, { timeout: 3000 });
+                    if (r.data.c) updateCache('stocks', { symbol: sym, price: r.data.c, change: r.data.dp }, 'symbol');
+                } catch (e) { }
+            }),
+            ...topCommodities.map(async name => {
+                try {
+                    const sym = CONFIG.commoditySymbols[name];
+                    const r = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`, { timeout: 3000 });
+                    if (r.data.c) updateCache('commodities-raw', { name, price: r.data.c, change: r.data.dp }, 'name');
+                } catch (e) { }
+            })
+        ]);
+        console.log('🔥 Hot Start Complete - UI Populated');
+    }
+
     // 2. Execution Loop
+    // Start Hot Start first, then loop
+    await performHotStart();
+
     // We execute one task every X ms
     taskQueue = buildQueue();
     let taskIndex = 0;
@@ -270,9 +308,8 @@ async function startSmartQueue() {
         if (task) await task(); // Execute fetch
 
         taskIndex++;
-        // 800ms delay = ~75 req/min. Finnhub limit is 60.
-        // Let's safe mode: 1200ms = 50 req/min. safe.
-        setTimeout(executeNext, 1200);
+        // 800ms delay to be safe
+        setTimeout(executeNext, 800);
     };
 
     executeNext(); // Start loop
