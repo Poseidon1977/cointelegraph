@@ -34,7 +34,7 @@
 }
 
 body {
-    background: var(--bg-dark);
+    background: #0a0a0c;
     color: var(--text-main);
     font-family: var(--font);
     overflow: hidden;
@@ -189,14 +189,8 @@ body {
 }
 
 .refresh-progress {
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    height: 2px;
-    background: var(--primary);
-    width: 0%;
-    transition: width 1s linear;
-    box-shadow: 0 0 10px var(--primary);
+    display: none;
+    /* Hide to remove blue line at top */
 }
 
 .title-group h1 {
