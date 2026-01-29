@@ -183,15 +183,9 @@ body {
     /* Hide to remove blue line at top */
 }
 
-.title-group h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
+.title-group,
 .clock {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
+    display: none !important;
 }
 
 .refresh-meta {
