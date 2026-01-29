@@ -17,7 +17,7 @@ const config = {
         'KO', 'MCD', 'DIS', 'V', 'JPM', 'WMT', 'PG', 'NKE', 'ORCL', 'CRM', 'ADBE',
         'PYPL', 'SHOP', 'UBER', 'ABNB', 'COIN', 'MSTR', 'QCOM', 'TXN'
     ],
-    refreshInterval: 5000, // 5 seconds
+    refreshInterval: 10000, // 10 seconds
     viewOrder: ['dashboard', 'stocks', 'commodities', 'forex', 'news', 'settings']
 };
 
