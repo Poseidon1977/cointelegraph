@@ -646,7 +646,6 @@ function createAssetCard(view, item) {
 
 function renderCommodities(grid, data) {
     const categories = {
-        'gold': t('metals'),
         'metals': t('metals'),
         'energy': t('energy'),
         'agri': t('agri'),
@@ -676,12 +675,11 @@ function renderCommodities(grid, data) {
 
             if (card) {
                 updateAssetCard(card, 'commodities', item);
-                // Special case for gold TRY/UAH cards which are rendered inside renderGoldCards
-                if (item.category === 'gold') {
+                if (item.name === 'Gold') {
                     updateGoldCards(item);
                 }
             } else {
-                if (item.category === 'gold') {
+                if (item.name === 'Gold') {
                     renderGoldCards(innerGrid, item);
                 } else {
                     card = createCommodityCard(item);
@@ -728,84 +726,56 @@ function updateGoldCards(item) {
         const priceEl = cardUAH.querySelector('.current-price');
         if (priceEl) priceEl.innerText = `₴${item.pricePerGramUAH ? item.pricePerGramUAH.toLocaleString('uk-UA', { maximumFractionDigits: 0 }) : '...'}`;
     }
-
-    // Update Gold Groups if they exist
-    if (item.goldGroups) {
-        item.goldGroups.forEach(group => {
-            const groupCardId = `card-commodities-${group.name.replace(/[^a-z0-9]/gi, '-')}`;
-            const groupCard = document.getElementById(groupCardId);
-            if (groupCard) {
-                const priceEl = groupCard.querySelector('.current-price');
-                if (priceEl) {
-                    const priceFormatted = group.price.toLocaleString('tr-TR', { maximumFractionDigits: 0 });
-                    priceEl.innerText = `₺${priceFormatted}`;
-                }
-            }
-        });
-    }
 }
 
 function renderGoldCards(grid, item) {
-    // 1. Global Gold Card (Spot oz)
+    // 1. Gold USD Card (Spot oz)
     const goldCard = createCommodityCard(item);
-    goldCard.id = `card-commodities-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
+    goldCard.id = `card-commodities-gold`;
+    const goldHeader = goldCard.querySelector('.asset-name');
+    if (goldHeader) goldHeader.innerHTML = `${getCommodityIcon('Gold')} Gold USD`;
     grid.appendChild(goldCard);
 
-    // 2. TRY Gram Card (24K)
+    // 2. Gold TRY Card
     const cardTRY = document.createElement('div');
     const isUp = item.change >= 0;
     cardTRY.id = 'card-commodities-gold-try';
     cardTRY.className = `asset-card card ${isUp ? 'bullish' : 'bearish'}`;
     cardTRY.innerHTML = `
         <header>
-            <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/tr.png" style="width:20px"> ${t('altin_try')}</div>
+            <div class="asset-name">${getCommodityIcon('Gold')} Gold TRY</div>
+            <span class="badge ${isUp ? 'bg-up' : 'bg-down'}">${isUp ? '▲' : '▼'} ${Math.abs(item.change).toFixed(2)}%</span>
         </header>
         <div class="price-box">
             <div class="current-price" style="color:var(--warning)">₺${item.pricePerGramTRY ? item.pricePerGramTRY.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : '...'}</div>
-            <div class="asset-symbol">${t('gram_altin_try')}</div>
+            <div class="asset-symbol">GRAM</div>
         </div>
         <div id="spark-commodities-gold-try" class="mini-chart"></div>`;
     cardTRY.onclick = () => openAssetModal('commodities', item);
     grid.appendChild(cardTRY);
 
-    // 3. UAH Gram Card
+    // 3. Gold UAH Card
     const cardUAH = document.createElement('div');
     cardUAH.id = 'card-commodities-gold-uah';
     cardUAH.className = `asset-card card ${isUp ? 'bullish' : 'bearish'}`;
     cardUAH.innerHTML = `
         <header>
-            <div class="asset-name">${getCommodityIcon('Gold')} <img src="https://flagcdn.com/w40/ua.png" style="width:20px"> ${t('altin_uah')}</div>
+            <div class="asset-name">${getCommodityIcon('Gold')} Gold UAH</div>
+            <span class="badge ${isUp ? 'bg-up' : 'bg-down'}">${isUp ? '▲' : '▼'} ${Math.abs(item.change).toFixed(2)}%</span>
         </header>
         <div class="price-box">
             <div class="current-price" style="color:var(--accent)">₴${item.pricePerGramUAH ? item.pricePerGramUAH.toLocaleString('uk-UA', { maximumFractionDigits: 0 }) : '...'}</div>
-            <div class="asset-symbol">${t('gram_altin_uah')}</div>
+            <div class="asset-symbol">GRAM</div>
         </div>
         <div id="spark-commodities-gold-uah" class="mini-chart"></div>`;
     cardUAH.onclick = () => openAssetModal('commodities', item);
     grid.appendChild(cardUAH);
 
-    // 4. Render Gold Groups (22K, 14K, Quarter, etc.)
-    if (item.goldGroups) {
-        item.goldGroups.forEach(group => {
-            const card = document.createElement('div');
-            card.id = `card-commodities-${group.name.replace(/[^a-z0-9]/gi, '-')}`;
-            card.className = `asset-card card ${isUp ? 'bullish' : 'bearish'}`;
-            const priceFormatted = group.price.toLocaleString('tr-TR', { maximumFractionDigits: 0 });
-            const sparkId = `spark-commodities-${group.name.replace(/[^a-z0-9]/gi, '-')}`;
-
-            card.innerHTML = `
-                <header>
-                    <div class="asset-name">${getCommodityIcon('Gold')} ${t(group.name)}</div>
-                </header>
-                <div class="price-box">
-                    <div class="current-price" style="color:var(--warning)">₺${priceFormatted}</div>
-                    <div class="asset-symbol">${t('unit_' + group.unit)}</div>
-                </div>
-                <div id="${sparkId}" class="mini-chart"></div>`;
-            card.onclick = () => openAssetModal('commodities', item);
-            grid.appendChild(card);
-        });
-    }
+    // Render Sparklines for the two gram cards (Spot is handled by renderView)
+    renderSparklines('commodities', [
+        { name: 'gold-try', change: item.change },
+        { name: 'gold-uah', change: item.change }
+    ]);
 }
 
 // --- Converter Logic ---
