@@ -16,7 +16,7 @@ app.use(cors());
 app.use(compression());
 app.use(express.static(__dirname));
 
-// --- MEMORY CACHE STORE (Instant Serve) ---
+// --- Smart Cache System ---
 const CACHE_STORE = {
     crypto: [],
     stocks: [],
@@ -26,7 +26,7 @@ const CACHE_STORE = {
     lastUpdate: 0
 };
 
-// --- DATA CONFIGURATION ---
+// --- Data Configuration ---
 const CONFIG = {
     cryptoMapping: {
         'bitcoin': { sym: 'BINANCE:BTCUSDT', name: 'Bitcoin', short: 'BTC' },
@@ -66,7 +66,17 @@ const CONFIG = {
         'kaspa': { sym: 'MEXC:KASPUSDT', name: 'Kaspa', short: 'KAS' }
     },
     stocks: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC'],
-    commoditySymbols: { 'Gold': 'OANDA:XAU_USD', 'Silver': 'OANDA:XAG_USD', 'Platinum': 'OANDA:XPT_USD', 'Palladium': 'OANDA:XPD_USD', 'Copper': 'OANDA:COPPER_USD', 'Crude Oil (WTI)': 'OANDA:WTICO_USD', 'Brent Oil': 'OANDA:BCO_USD', 'Natural Gas': 'OANDA:NATGAS_USD' }
+    commoditySymbols: { 'Gold': 'OANDA:XAU_USD', 'Silver': 'OANDA:XAG_USD', 'Platinum': 'OANDA:XPT_USD', 'Palladium': 'OANDA:XPD_USD', 'Copper': 'OANDA:COPPER_USD', 'Crude Oil (WTI)': 'OANDA:WTICO_USD', 'Brent Oil': 'OANDA:BCO_USD', 'Natural Gas': 'OANDA:NATGAS_USD' },
+    forexSymbols: {
+        'EUR/USD': 'OANDA:EUR_USD',
+        'GBP/USD': 'OANDA:GBP_USD',
+        'USD/JPY': 'OANDA:USD_JPY',
+        'USD/CHF': 'OANDA:USD_CHF',
+        'AUD/USD': 'OANDA:AUD_USD',
+        'USD/CAD': 'OANDA:USD_CAD',
+        'USD/CNY': 'OANDA:USD_CNY',
+        'USD/TRY': 'OANDA:USD_TRY'
+    }
 };
 
 const previousPrices = new Map();
@@ -183,13 +193,26 @@ async function startBackgroundPolling() {
         } catch (e) { console.error('Commodities Poll Error'); }
     };
 
+    const updateForex = async () => {
+        try {
+            const results = await Promise.all(Object.entries(CONFIG.forexSymbols).map(([name, sym]) =>
+                axios.get(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`, { timeout: 3500 })
+                    .then(r => ({ symbol: name, price: r.data.c, change: r.data.dp }))
+                    .catch(() => null)
+            ));
+            const valid = results.filter(x => x !== null && x.price);
+            if (valid.length > 0) CACHE_STORE.forex = valid;
+        } catch (e) { console.error('Forex Poll Error'); }
+    };
+
     // Initial Parallel Fetch
-    await Promise.all([updateCrypto(), updateStocks(), updateCommodities()]);
+    await Promise.all([updateCrypto(), updateStocks(), updateCommodities(), updateForex()]);
 
     // Independent Polling Loops
     setInterval(updateCrypto, 20000);       // Crypto: Every 20s
     setInterval(updateStocks, 30000);       // Stocks: Every 30s
     setInterval(updateCommodities, 45000);  // Commodities: Every 45s
+    setInterval(updateForex, 60000);        // Forex: Every 60s
 }
 
 // Start Engine
@@ -222,20 +245,8 @@ app.get('/api/news', async (req, res) => {
 });
 
 app.get('/api/forex', async (req, res) => {
-    // Forex is fast via Open Exchange Rates, keep simple or cache
-    try {
-        const r = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 4000 });
-        const rates = r.data.rates;
-        const data = Object.entries(rates)
-            .filter(([curr]) => curr !== 'USD')
-            .map(([curr, val]) => ({
-                symbol: `USD/${curr}`,
-                price: parseFloat(val.toFixed(4)),
-                change: parseFloat(((Math.random() - 0.5) * 0.2).toFixed(2))
-            }))
-            .sort((a, b) => a.symbol.localeCompare(b.symbol));
-        res.json(data);
-    } catch (e) { res.json([]); }
+    if (CACHE_STORE.forex.length > 0) return res.json(CACHE_STORE.forex);
+    res.json([]);
 });
 
 app.listen(PORT, () => {
