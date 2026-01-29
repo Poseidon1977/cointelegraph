@@ -490,7 +490,10 @@ function renderView(view, data) {
         updateConverter(data);
     }
 
-    // Surgical Updates: Instead of grid.innerHTML = '', we update in place
+    // Optimization: Use DocumentFragment if the grid is mostly empty (first load)
+    const isFirstLoad = grid.children.length <= 1; // 1 for skeleton
+    const fragment = isFirstLoad ? document.createDocumentFragment() : null;
+
     data.forEach(item => {
         const cardId = `card-${view}-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
         let card = document.getElementById(cardId);
@@ -500,9 +503,15 @@ function renderView(view, data) {
         } else {
             card = createAssetCard(view, item);
             card.id = cardId;
-            grid.appendChild(card);
+            if (fragment) fragment.appendChild(card);
+            else grid.appendChild(card);
         }
     });
+
+    if (fragment) {
+        grid.innerHTML = '';
+        grid.appendChild(fragment);
+    }
 
     // Remove cards that are no longer in data
     const activeIds = data.map(item => `card-${view}-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`);
@@ -553,6 +562,7 @@ const chartStore = new Map();
 function renderSparklines(view, data) {
     if (!window.ApexCharts) return;
 
+    const delay = window.innerWidth < 768 ? 250 : 100; // More delay on mobile to keep scrolling smooth
     setTimeout(() => {
         data.forEach(item => {
             const id = `spark-${view}-${(item.id || item.symbol || item.name).replace(/[^a-z0-9]/gi, '-')}`;
