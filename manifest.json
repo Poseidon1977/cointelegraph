@@ -4,8 +4,8 @@
   "description": "Real-time crypto, stock, and forex tracker with 24h trends.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#2962ff",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0a0a0c",
   "icons": [
     {
       "src": "icon.png?v=2",
