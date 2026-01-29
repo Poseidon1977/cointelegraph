@@ -88,6 +88,7 @@ const CONFIG = {
         'Sugar': 'OANDA:SUGAR_USD'
     },
     forexSymbols: {
+        // Majors
         'EUR/USD': 'OANDA:EUR_USD',
         'GBP/USD': 'OANDA:GBP_USD',
         'USD/JPY': 'OANDA:USD_JPY',
@@ -162,8 +163,9 @@ async function startSmartQueue() {
             'Sugar': { category: 'agri', unit: 'lb', basePrice: 0.2 }
         };
 
-        const usdToTry = 42.5;
-        const usdToUah = 41.5;
+        // DYNAMIC RATES from Cache
+        const tryRate = CACHE_STORE.forex.find(f => f.symbol === 'USD/TRY')?.price || 35.50;
+        const uahRate = CACHE_STORE.forex.find(f => (f.symbol === 'USD/UAH') || (f.symbol === 'USD/UAH'))?.price || 41.50;
 
         const processed = Object.keys(CACHE_STORE.raw_commodities).map(name => {
             const raw = CACHE_STORE.raw_commodities[name];
@@ -172,7 +174,10 @@ async function startSmartQueue() {
             let extra = {};
             if (name === 'Gold') {
                 const pricePerGram = raw.price / GRAMS_PER_OUNCE;
-                extra = { price_gram_try: pricePerGram * usdToTry, price_gram_uah: pricePerGram * usdToUah };
+                extra = {
+                    price_gram_try: pricePerGram * tryRate,
+                    price_gram_uah: pricePerGram * uahRate
+                };
             }
 
             return {
