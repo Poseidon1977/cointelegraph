@@ -279,8 +279,8 @@ app.get('/api/commodities', async (req, res) => {
         if (cached) return res.json(cached);
 
         const GRAMS_PER_OUNCE = 31.1035;
-        let usdToTry = 34.50;
-        let usdToUah = 41.00;
+        let usdToTry = 42.50; // Calibrated for 2026
+        let usdToUah = 41.50; // Calibrated for 2026
 
         // Commodity Symbol Map (Finnhub OANDA)
         const commoditySymbols = {
@@ -295,13 +295,13 @@ app.get('/api/commodities', async (req, res) => {
         };
 
         const commodityInfo = {
-            'Gold': { category: 'gold', unit: 'oz', basePrice: 2700 }, // Fallback prices
-            'Silver': { category: 'metals', unit: 'oz', basePrice: 31 },
-            'Platinum': { category: 'metals', unit: 'oz', basePrice: 1000 },
-            'Palladium': { category: 'metals', unit: 'oz', basePrice: 1050 },
-            'Copper': { category: 'metals', unit: 'ton', basePrice: 9000 },
-            'Crude Oil (WTI)': { category: 'energy', unit: 'barrel', basePrice: 75.20 },
-            'Brent Oil': { category: 'energy', unit: 'barrel', basePrice: 80.50 },
+            'Gold': { category: 'gold', unit: 'oz', basePrice: 5565.40 }, // Corrected 2026 Spot
+            'Silver': { category: 'metals', unit: 'oz', basePrice: 45.50 }, // Corrected 2026 Spot
+            'Platinum': { category: 'metals', unit: 'oz', basePrice: 1200 },
+            'Palladium': { category: 'metals', unit: 'oz', basePrice: 1300 },
+            'Copper': { category: 'metals', unit: 'ton', basePrice: 10500 },
+            'Crude Oil (WTI)': { category: 'energy', unit: 'barrel', basePrice: 85.20 },
+            'Brent Oil': { category: 'energy', unit: 'barrel', basePrice: 89.50 },
             'Natural Gas': { category: 'energy', unit: 'MMBtu', basePrice: 2.50 },
             'Wheat': { category: 'agri', unit: 'bushel', basePrice: 6.00 },
             'Coffee': { category: 'agri', unit: 'lb', basePrice: 2.10 },
