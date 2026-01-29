@@ -16,7 +16,7 @@ app.use(cors());
 app.use(compression());
 app.use(express.static(__dirname));
 
-// --- Smart Cache System ---
+// --- MEMORY CACHE STORE ---
 const CACHE_STORE = {
     crypto: [],
     stocks: [],
@@ -26,7 +26,7 @@ const CACHE_STORE = {
     lastUpdate: 0
 };
 
-// --- Data Configuration ---
+// --- DATA CONFIGURATION ---
 const CONFIG = {
     cryptoMapping: {
         'bitcoin': { sym: 'BINANCE:BTCUSDT', name: 'Bitcoin', short: 'BTC' },
@@ -65,8 +65,28 @@ const CONFIG = {
         'okb': { sym: 'OKX:OKB-USDT', name: 'OKB', short: 'OKB' },
         'kaspa': { sym: 'MEXC:KASPUSDT', name: 'Kaspa', short: 'KAS' }
     },
-    stocks: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX', 'AMD', 'INTC'],
-    commoditySymbols: { 'Gold': 'OANDA:XAU_USD', 'Silver': 'OANDA:XAG_USD', 'Platinum': 'OANDA:XPT_USD', 'Palladium': 'OANDA:XPD_USD', 'Copper': 'OANDA:COPPER_USD', 'Crude Oil (WTI)': 'OANDA:WTICO_USD', 'Brent Oil': 'OANDA:BCO_USD', 'Natural Gas': 'OANDA:NATGAS_USD' },
+    // Expanded Stock List - Max Coverage
+    stocks: [
+        'AAPL', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NFLX', 'AMD', 'INTC', // Tech
+        'JPM', 'BAC', 'V', 'MA', 'GS', 'MS', 'WFC', 'C', // Finance
+        'WMT', 'TGT', 'COST', 'NKE', 'SBUX', 'MCD', 'KO', 'PEP', 'PG', // Retail/Consumer
+        'XOM', 'CVX', 'GE', 'CAT', 'BA', 'F', 'GM', // Industrial/Energy
+        'PFE', 'JNJ', 'MRK', 'ABBV', 'LLY', 'UNH', // Healthcare
+        'DIS', 'CMCSA', 'VZ', 'T' // Media/Telco
+    ],
+    commoditySymbols: {
+        'Gold': 'OANDA:XAU_USD',
+        'Silver': 'OANDA:XAG_USD',
+        'Platinum': 'OANDA:XPT_USD',
+        'Palladium': 'OANDA:XPD_USD',
+        'Copper': 'OANDA:COPPER_USD',
+        'Crude Oil (WTI)': 'OANDA:WTICO_USD',
+        'Brent Oil': 'OANDA:BCO_USD',
+        'Natural Gas': 'OANDA:NATGAS_USD',
+        'Wheat': 'OANDA:WHEAT_USD',
+        'Corn': 'OANDA:CORN_USD',
+        'Sugar': 'OANDA:SUGAR_USD'
+    },
     forexSymbols: {
         'EUR/USD': 'OANDA:EUR_USD',
         'GBP/USD': 'OANDA:GBP_USD',
@@ -92,138 +112,181 @@ function smoothPrice(id, newPrice) {
     return newPrice;
 }
 
-// --- BACKGROUND ENGINE ---
-async function startBackgroundPolling() {
-    console.log('🚀 Starting Background Data Engine...');
+// --- SMART QUEUE ENGINE ---
+async function startSmartQueue() {
+    console.log('🚂 Starting Smart Sequential Queue...');
 
-    const updateCrypto = async () => {
-        try {
-            const ids = Object.keys(CONFIG.cryptoMapping);
-            // Batch requests to prevent overwhelming the event loop
-            const results = await Promise.all(ids.map(async (id) => {
+    // 1. Build the Unified Queue
+    // We create a list of tasks. Each task is a function that fetches 1 asset.
+    let taskQueue = [];
+
+    const buildQueue = () => {
+        const tasks = [];
+
+        // Crypto Tasks
+        Object.keys(CONFIG.cryptoMapping).forEach(id => {
+            tasks.push(async () => {
                 const map = CONFIG.cryptoMapping[id];
                 try {
-                    const response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${map.sym}&token=${FINNHUB_KEY}`, { timeout: 4500 });
-                    const q = response.data;
-                    if (!q.c) return null;
-                    return {
-                        id: id,
-                        symbol: map.short.toLowerCase(),
-                        name: map.name,
-                        current_price: smoothPrice(id, q.c),
-                        price_change_percentage_24h: q.dp || 0
-                    };
-                } catch (e) { return null; }
-            }));
-            const valid = results.filter(x => x !== null);
-            if (valid.length > 0) {
-                CACHE_STORE.crypto = valid;
-                console.log(`✅ Crypto Updated: ${valid.length} coins`);
-            }
-        } catch (e) { console.error('Crypto Poll Error'); }
-    };
-
-    const updateStocks = async () => {
-        try {
-            const results = await Promise.all(CONFIG.stocks.map(symbol =>
-                axios.get(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`, { timeout: 3500 })
-                    .then(r => ({ symbol, price: r.data.c || 0, change: r.data.dp || 0 }))
-                    .catch(() => null)
-            ));
-            const valid = results.filter(x => x !== null);
-            if (valid.length > 0) CACHE_STORE.stocks = valid;
-        } catch (e) { console.error('Stocks Poll Error'); }
-    };
-
-    const updateCommodities = async () => {
-        try {
-            let livePrices = {};
-            const results = await Promise.all(Object.entries(CONFIG.commoditySymbols).map(([name, sym]) =>
-                axios.get(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`, { timeout: 3500 })
-                    .then(r => ({ name, price: r.data.c, change: r.data.dp }))
-                    .catch(() => ({ name, price: null }))
-            ));
-            results.forEach(r => { if (r.price) livePrices[r.name] = { price: r.price, change: r.change }; });
-
-            // Fetch Forex for Conversions
-            let usdToTry = 42.50;
-            let usdToUah = 41.50;
-            const forex = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 3000 }).catch(() => null);
-            if (forex?.data?.rates) {
-                usdToTry = forex.data.rates.TRY || usdToTry;
-                usdToUah = forex.data.rates.UAH || usdToUah;
-            }
-
-            const GRAMS_PER_OUNCE = 31.1035;
-            const commodityInfo = {
-                'Gold': { category: 'metals', unit: 'oz', basePrice: 5565.40 },
-                'Silver': { category: 'metals', unit: 'oz', basePrice: 45.50 },
-                'Platinum': { category: 'metals', unit: 'oz', basePrice: 1200 },
-                'Palladium': { category: 'metals', unit: 'oz', basePrice: 1300 },
-                'Copper': { category: 'metals', unit: 'ton', basePrice: 10500 },
-                'Crude Oil (WTI)': { category: 'energy', unit: 'barrel', basePrice: 85.20 },
-                'Brent Oil': { category: 'energy', unit: 'barrel', basePrice: 89.50 },
-                'Natural Gas': { category: 'energy', unit: 'MMBtu', basePrice: 2.50 },
-                'Wheat': { category: 'agri', unit: 'bushel', basePrice: 6.00 }
-            };
-
-            const data = Object.entries(commodityInfo).map(([name, info]) => {
-                const live = livePrices[name] || {};
-                const price = live.price || info.basePrice;
-                const change = live.change || ((Math.random() - 0.5) * 0.5); // Fallback noise
-
-                let extraData = {};
-                if (name === 'Gold') {
-                    const pricePerGramUSD = price / GRAMS_PER_OUNCE;
-                    extraData = {
-                        price_gram_try: pricePerGramUSD * usdToTry,
-                        price_gram_uah: pricePerGramUSD * usdToUah
-                    };
-                }
-
-                return {
-                    name,
-                    ...info,
-                    current_price: price,
-                    ...extraData,
-                    price_change_percentage_24h: change
-                };
+                    const r = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${map.sym}&token=${FINNHUB_KEY}`, { timeout: 4000 });
+                    if (r.data.c) {
+                        const item = {
+                            id: id,
+                            symbol: map.short.toLowerCase(),
+                            name: map.name,
+                            current_price: smoothPrice(id, r.data.c),
+                            price_change_percentage_24h: r.data.dp || 0
+                        };
+                        // Update specific item in cache
+                        updateCache('crypto', item, 'id');
+                    }
+                } catch (e) { }
             });
-            CACHE_STORE.commodities = data;
-        } catch (e) { console.error('Commodities Poll Error'); }
+        });
+
+        // Stock Tasks
+        CONFIG.stocks.forEach(sym => {
+            tasks.push(async () => {
+                try {
+                    const r = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`, { timeout: 4000 });
+                    if (r.data.c) {
+                        const item = { symbol: sym, price: r.data.c, change: r.data.dp || 0 };
+                        updateCache('stocks', item, 'symbol');
+                    }
+                } catch (e) { }
+            });
+        });
+
+        // Commodity Tasks
+        Object.entries(CONFIG.commoditySymbols).forEach(([name, sym]) => {
+            tasks.push(async () => {
+                try {
+                    const r = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`, { timeout: 4000 });
+                    if (r.data.c) {
+                        const item = { name: name, price: r.data.c, change: r.data.dp || 0 };
+                        updateCache('commodities-raw', item, 'name'); // Store raw for post-processing
+                    }
+                } catch (e) { }
+            });
+        });
+
+        // Forex Tasks
+        Object.entries(CONFIG.forexSymbols).forEach(([name, sym]) => {
+            tasks.push(async () => {
+                try {
+                    const r = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`, { timeout: 4000 });
+                    if (r.data.c) {
+                        const item = { symbol: name, price: r.data.c, change: r.data.dp || 0 };
+                        updateCache('forex', item, 'symbol');
+                    }
+                } catch (e) { }
+            });
+        });
+
+        return tasks;
     };
 
-    const updateForex = async () => {
-        try {
-            const results = await Promise.all(Object.entries(CONFIG.forexSymbols).map(([name, sym]) =>
-                axios.get(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`, { timeout: 3500 })
-                    .then(r => ({ symbol: name, price: r.data.c, change: r.data.dp }))
-                    .catch(() => null)
-            ));
-            const valid = results.filter(x => x !== null && x.price);
-            if (valid.length > 0) CACHE_STORE.forex = valid;
-        } catch (e) { console.error('Forex Poll Error'); }
+    // Helper to update cache arrays safely
+    const updateCache = (category, item, keyField) => {
+        if (category === 'commodities-raw') {
+            // Special handling for commodities (post-processed later)
+            if (!CACHE_STORE.raw_commodities) CACHE_STORE.raw_commodities = {};
+            CACHE_STORE.raw_commodities[item.name] = item;
+            processCommodities(); // Trigger re-calc
+            return;
+        }
+
+        const list = CACHE_STORE[category];
+        const index = list.findIndex(x => x[keyField] === item[keyField]);
+        if (index >= 0) {
+            list[index] = item;
+        } else {
+            list.push(item);
+        }
     };
 
-    // Initial Parallel Fetch
-    await Promise.all([updateCrypto(), updateStocks(), updateCommodities(), updateForex()]);
+    // Special Processor for Commodities (Conversions etc)
+    const processCommodities = async () => {
+        if (!CACHE_STORE.raw_commodities) return;
 
-    // Independent Polling Loops
-    setInterval(updateCrypto, 20000);       // Crypto: Every 20s
-    setInterval(updateStocks, 30000);       // Stocks: Every 30s
-    setInterval(updateCommodities, 45000);  // Commodities: Every 45s
-    setInterval(updateForex, 60000);        // Forex: Every 60s
+        // Static Info
+        const GRAMS_PER_OUNCE = 31.1035;
+        const commodityInfo = {
+            'Gold': { category: 'metals', unit: 'oz', basePrice: 2000 },
+            'Silver': { category: 'metals', unit: 'oz', basePrice: 25 },
+            'Platinum': { category: 'metals', unit: 'oz', basePrice: 900 },
+            'Palladium': { category: 'metals', unit: 'oz', basePrice: 1000 },
+            'Copper': { category: 'metals', unit: 'ton', basePrice: 8500 },
+            'Crude Oil (WTI)': { category: 'energy', unit: 'barrel', basePrice: 75 },
+            'Brent Oil': { category: 'energy', unit: 'barrel', basePrice: 80 },
+            'Natural Gas': { category: 'energy', unit: 'MMBtu', basePrice: 2.5 },
+            'Wheat': { category: 'agri', unit: 'bushel', basePrice: 6.0 },
+            'Corn': { category: 'agri', unit: 'bushel', basePrice: 5.0 },
+            'Sugar': { category: 'agri', unit: 'lb', basePrice: 0.2 }
+        };
+
+        // Try to get Forex for conversions (rarely)
+        let usdToTry = 42.5;
+        let usdToUah = 41.5;
+        // ... (Optional: fetch forex here occasionally or use cached forex)
+
+        const processed = Object.keys(CACHE_STORE.raw_commodities).map(name => {
+            const raw = CACHE_STORE.raw_commodities[name];
+            const info = commodityInfo[name] || { unit: '', category: 'other' };
+
+            let extra = {};
+            if (name === 'Gold') {
+                const pricePerGram = raw.price / GRAMS_PER_OUNCE;
+                extra = { price_gram_try: pricePerGram * usdToTry, price_gram_uah: pricePerGram * usdToUah };
+            }
+
+            return {
+                name,
+                ...info,
+                current_price: raw.price,
+                price_change_percentage_24h: raw.change,
+                ...extra
+            };
+        });
+
+        CACHE_STORE.commodities = processed;
+    };
+
+    // 2. Execution Loop
+    // We execute one task every X ms
+    taskQueue = buildQueue();
+    let taskIndex = 0;
+
+    const executeNext = async () => {
+        if (taskQueue.length === 0) taskQueue = buildQueue();
+
+        if (taskIndex >= taskQueue.length) {
+            taskIndex = 0;
+            // Optional: Re-shuffle or re-build queue periodically?
+            // For now, just loop.
+        }
+
+        const task = taskQueue[taskIndex];
+        if (task) await task(); // Execute fetch
+
+        taskIndex++;
+        // 800ms delay = ~75 req/min. Finnhub limit is 60.
+        // Let's safe mode: 1200ms = 50 req/min. safe.
+        setTimeout(executeNext, 1200);
+    };
+
+    executeNext(); // Start loop
 }
 
-// Start Engine
-startBackgroundPolling();
+// Start Sequential Engine
+// Wait a bit for server start
+setTimeout(startSmartQueue, 1000);
 
-// --- API ENDPOINTS (Instant Response) ---
+// --- API ENDPOINTS ---
 
 app.get('/api/crypto/markets', (req, res) => {
-    // Return whatever is in memory immediately
     if (CACHE_STORE.crypto.length > 0) return res.json(CACHE_STORE.crypto);
-    res.json([]); // Only happens on very first cold boot second
+    res.json([]);
 });
 
 app.get('/api/stocks', (req, res) => {
@@ -236,17 +299,16 @@ app.get('/api/commodities', (req, res) => {
     res.json([]);
 });
 
+app.get('/api/forex', (req, res) => {
+    if (CACHE_STORE.forex.length > 0) return res.json(CACHE_STORE.forex);
+    res.json([]);
+});
+
 app.get('/api/news', async (req, res) => {
-    // News is less time-sensitive, simple cache is fine or use memory if added
     try {
         const r = await axios.get(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_KEY}`, { timeout: 4000 });
         res.json(r.data || []);
     } catch (e) { res.json([]); }
-});
-
-app.get('/api/forex', async (req, res) => {
-    if (CACHE_STORE.forex.length > 0) return res.json(CACHE_STORE.forex);
-    res.json([]);
 });
 
 app.listen(PORT, () => {
