@@ -541,6 +541,9 @@ function updateAssetCard(card, view, item) {
     } else if (view === 'forex') {
         price = item.price?.toFixed(4);
         change = item.change || 0;
+    } else if (view === 'commodities') {
+        price = `$${item.current_price?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        change = item.price_change_percentage_24h || 0;
     }
 
     const isUp = change >= 0;
