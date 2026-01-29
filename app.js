@@ -17,8 +17,12 @@ const config = {
         'KO', 'MCD', 'DIS', 'V', 'JPM', 'WMT', 'PG', 'NKE', 'ORCL', 'CRM', 'ADBE',
         'PYPL', 'SHOP', 'UBER', 'ABNB', 'COIN', 'MSTR', 'QCOM', 'TXN'
     ],
-    refreshInterval: 10000, // 10 seconds
-    viewOrder: ['dashboard', 'stocks', 'commodities', 'forex', 'news', 'settings']
+    refreshInterval: 10000,
+    viewOrder: ['dashboard', 'stocks', 'commodities', 'forex', 'news', 'settings'],
+    currencies: [
+        'USD', 'EUR', 'GBP', 'TRY', 'JPY', 'CHF', 'AUD', 'CAD', 'CNY', 'UAH',
+        'MXN', 'ZAR', 'HKD', 'SGD', 'SEK', 'NOK', 'NZD', 'INR', 'BRL'
+    ]
 };
 
 // --- Application State ---

@@ -217,11 +217,24 @@ async function startSmartQueue() {
         // 1. SEED FOREX FIRST (Crucial for Gold calculations)
         Object.keys(CONFIG.forexSymbols).forEach(name => {
             let p = 1.00;
-            if (name.includes('JPY')) p = 155.00;
-            if (name.includes('TRY')) p = 43.50; // Calibrated 2026 Rate
-            if (name.includes('CNY')) p = 7.25;
-            if (name.includes('MXN')) p = 20.10;
+            if (name === 'EUR/USD') p = 1.0850;
+            if (name === 'GBP/USD') p = 1.2720;
+            if (name === 'USD/JPY') p = 155.00;
+            if (name === 'USD/CHF') p = 0.8850;
+            if (name === 'AUD/USD') p = 0.6540;
+            if (name === 'USD/CAD') p = 1.3850;
+            if (name === 'USD/CNY') p = 7.25;
+            if (name === 'USD/TRY') p = 43.50; // Calibrated 2026 Rate
             if (name === 'USD/UAH') p = 42.00;
+            if (name === 'USD/MXN') p = 20.10;
+            if (name === 'USD/ZAR') p = 18.50;
+            if (name === 'USD/HKD') p = 7.82;
+            if (name === 'USD/SGD') p = 1.35;
+            if (name === 'USD/SEK') p = 10.50;
+            if (name === 'USD/NOK') p = 10.80;
+            if (name === 'NZD/USD') p = 0.6050;
+            if (name === 'USD/INR') p = 84.00;
+            if (name === 'USD/BRL') p = 5.85;
             updateCache('forex', { symbol: name, price: p, change: 0.1 }, 'symbol');
         });
 
