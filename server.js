@@ -88,14 +88,25 @@ const CONFIG = {
         'Sugar': 'OANDA:SUGAR_USD'
     },
     forexSymbols: {
+        // Majors
         'EUR/USD': 'OANDA:EUR_USD',
         'GBP/USD': 'OANDA:GBP_USD',
         'USD/JPY': 'OANDA:USD_JPY',
         'USD/CHF': 'OANDA:USD_CHF',
         'AUD/USD': 'OANDA:AUD_USD',
         'USD/CAD': 'OANDA:USD_CAD',
+        // Global
         'USD/CNY': 'OANDA:USD_CNY',
-        'USD/TRY': 'OANDA:USD_TRY'
+        'USD/TRY': 'OANDA:USD_TRY',
+        'USD/MXN': 'OANDA:USD_MXN',
+        'USD/ZAR': 'OANDA:USD_ZAR',
+        'USD/HKD': 'OANDA:USD_HKD',
+        'USD/SGD': 'OANDA:USD_SGD',
+        'USD/SEK': 'OANDA:USD_SEK',
+        'USD/NOK': 'OANDA:USD_NOK',
+        'NZD/USD': 'OANDA:NZD_USD',
+        'USD/INR': 'OANDA:USD_INR',
+        'USD/BRL': 'OANDA:USD_BRL'
     }
 };
 
