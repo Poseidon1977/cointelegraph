@@ -137,9 +137,9 @@ body {
 
 .nav-item.active {
     color: var(--primary);
-    background: transparent;
-    /* Box removed */
-    box-shadow: none;
+    background: transparent !important;
+    /* Explicitly remove any active background */
+    box-shadow: none !important;
 }
 
 .market-badge {
@@ -366,11 +366,11 @@ body {
     height: 100%;
     overflow-y: auto;
     padding: 24px 16px;
-    padding-bottom: 120px;
+    padding-bottom: 60px;
     scroll-behavior: smooth;
     scroll-padding-top: 100px;
     /* Account for top bar in smooth scrolls */
-    scroll-padding-bottom: 150px;
+    scroll-padding-bottom: 100px;
     opacity: 0.6;
     transition: opacity 0.3s;
 }
