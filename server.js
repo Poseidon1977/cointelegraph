@@ -165,8 +165,8 @@ async function startSmartQueue() {
         };
 
         // DYNAMIC RATES from Cache
-        const tryRate = CACHE_STORE.forex.find(f => f.symbol === 'USD/TRY')?.price || 35.50;
-        const uahRate = CACHE_STORE.forex.find(f => f.symbol === 'USD/UAH')?.price || 41.50;
+        const tryRate = CACHE_STORE.forex.find(f => f.symbol === 'USD/TRY')?.price || 43.50;
+        const uahRate = CACHE_STORE.forex.find(f => f.symbol === 'USD/UAH')?.price || 42.00;
 
         const processed = Object.keys(CACHE_STORE.raw_commodities).map(name => {
             const raw = CACHE_STORE.raw_commodities[name];
@@ -218,10 +218,10 @@ async function startSmartQueue() {
         Object.keys(CONFIG.forexSymbols).forEach(name => {
             let p = 1.00;
             if (name.includes('JPY')) p = 155.00;
-            if (name.includes('TRY')) p = 35.50;
+            if (name.includes('TRY')) p = 43.50; // Calibrated 2026 Rate
             if (name.includes('CNY')) p = 7.25;
             if (name.includes('MXN')) p = 20.10;
-            if (name === 'USD/UAH') p = 41.60;
+            if (name === 'USD/UAH') p = 42.00;
             updateCache('forex', { symbol: name, price: p, change: 0.1 }, 'symbol');
         });
 
