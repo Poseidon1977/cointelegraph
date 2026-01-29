@@ -116,8 +116,17 @@ body {
     color: var(--text-muted);
     /* Slightly dimmer for better active contrast */
     font-weight: 500;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0.6;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item:active {
+    transform: scale(1.35) !important;
+    /* Grow significantly when pressed */
+    opacity: 1;
+    transition: transform 0.1s ease-out;
 }
 
 .nav-item span {
@@ -144,7 +153,8 @@ body {
     background: transparent !important;
     box-shadow: none !important;
     filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.5));
-    transform: scale(1.15);
+    transform: scale(1.25);
+    /* Slightly larger persistent active state */
 }
 
 .nav-item.active svg {
