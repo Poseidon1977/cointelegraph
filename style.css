@@ -138,10 +138,18 @@ body {
 }
 
 .nav-item.active {
-    color: var(--primary);
+    color: var(--accent);
+    /* Switch to high-visibility Cyan */
+    opacity: 1;
     background: transparent !important;
-    /* Explicitly remove any active background */
     box-shadow: none !important;
+    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.5));
+    transform: scale(1.15);
+}
+
+.nav-item.active svg {
+    stroke-width: 2.5px;
+    /* Thicker strokes for better visibility */
 }
 
 .market-badge {
