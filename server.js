@@ -41,45 +41,54 @@ const getCachedData = (key) => {
 app.get('/api/crypto/markets', async (req, res) => {
     try {
         const { ids } = req.query;
-        const cacheKey = `crypto_${ids}`;
+        const requestedIds = ids ? ids.split(',') : [];
+        const cacheKey = `crypto_${requestedIds.sort().join('_')}`;
         const cached = getCachedData(cacheKey);
         if (cached) return res.json(cached);
 
-        let data = [];
-        const requestedIds = ids ? ids.split(',') : [];
+        const cryptoMapping = {
+            'bitcoin': { sym: 'BINANCE:BTCUSDT', name: 'Bitcoin', short: 'BTC' },
+            'ethereum': { sym: 'BINANCE:ETHUSDT', name: 'Ethereum', short: 'ETH' },
+            'solana': { sym: 'BINANCE:SOLUSDT', name: 'Solana', short: 'SOL' },
+            'binancecoin': { sym: 'BINANCE:BNBUSDT', name: 'BNB', short: 'BNB' },
+            'ripple': { sym: 'BINANCE:XRPUSDT', name: 'XRP', short: 'XRP' },
+            'dogecoin': { sym: 'BINANCE:DOGEUSDT', name: 'Dogecoin', short: 'DOGE' },
+            'cardano': { sym: 'BINANCE:ADAUSDT', name: 'Cardano', short: 'ADA' },
+            'avalanche-2': { sym: 'BINANCE:AVAXUSDT', name: 'Avalanche', short: 'AVAX' },
+            'polkadot': { sym: 'BINANCE:DOTUSDT', name: 'Polkadot', short: 'DOT' },
+            'tron': { sym: 'BINANCE:TRXUSDT', name: 'TRON', short: 'TRX' }
+        };
 
-        try {
-            const response = await axios.get(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=100&page=1&sparkline=false`, { timeout: 8000 });
-            data = (response.data || []).map(item => ({
-                ...item,
-                current_price: smoothPrice(item.id, item.current_price)
-            }));
-        } catch (cgError) { console.warn('[API] CoinGecko Error fallback used'); }
+        const targetIds = requestedIds.length ? requestedIds : Object.keys(cryptoMapping);
 
-        try {
-            const binancePairs = { 'bitcoin': 'BTCUSDT', 'ethereum': 'ETHUSDT', 'solana': 'SOLUSDT', 'binancecoin': 'BNBUSDT', 'ripple': 'XRPUSDT', 'dogecoin': 'DOGEUSDT' };
-            const binanceRes = await axios.get('https://api.binance.com/api/v3/ticker/24hr', { timeout: 5000 });
-            const binanceData = binanceRes.data;
-
-            Object.entries(binancePairs).forEach(([id, symbol]) => {
-                const ticker = binanceData.find(t => t.symbol === symbol);
-                if (!ticker) return;
-                const index = data.findIndex(d => d.id === id);
-                const mappedItem = {
-                    id: id, symbol: symbol.replace('USDT', '').toLowerCase(), name: id[0].toUpperCase() + id.slice(1),
-                    current_price: smoothPrice(id, parseFloat(ticker.lastPrice)),
-                    price_change_percentage_24h: parseFloat(ticker.priceChangePercent)
+        const data = await Promise.all(targetIds.map(async (id) => {
+            const map = cryptoMapping[id];
+            if (!map) return null;
+            try {
+                const response = await axios.get(`https://finnhub.io/api/v1/quote?symbol=${map.sym}&token=${FINNHUB_KEY}`, { timeout: 4000 });
+                const q = response.data;
+                if (!q.c) return null;
+                return {
+                    id: id,
+                    symbol: map.short.toLowerCase(),
+                    name: map.name,
+                    current_price: smoothPrice(id, q.c),
+                    price_change_percentage_24h: q.dp || 0,
+                    market_cap: 0, // Not provided by quote but kept for schema compatibility
+                    total_volume: 0
                 };
-                if (index !== -1) data[index] = { ...data[index], ...mappedItem };
-                else if (requestedIds.includes(id)) data.push(mappedItem);
-            });
-        } catch (bErr) { console.warn('[API] Binance fallback failed'); }
+            } catch (err) {
+                return null;
+            }
+        }));
 
-        if (!data.length) data = [{ id: 'bitcoin', current_price: 104500, change: 1.2 }];
-
-        cache.set(cacheKey, { data, timestamp: Date.now() });
-        res.json(data);
-    } catch (e) { res.status(500).json({ error: 'Fatal crypto error' }); }
+        const cleanData = data.filter(x => x !== null);
+        cache.set(cacheKey, { data: cleanData, timestamp: Date.now() });
+        res.json(cleanData);
+    } catch (e) {
+        console.error('Crypto error:', e);
+        res.status(500).json({ error: 'Fatal crypto error' });
+    }
 });
 
 app.get('/api/stocks', async (req, res) => {
