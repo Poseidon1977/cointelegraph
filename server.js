@@ -98,6 +98,7 @@ const CONFIG = {
         // Global
         'USD/CNY': 'OANDA:USD_CNY',
         'USD/TRY': 'OANDA:USD_TRY',
+        'USD/UAH': 'OANDA:USD_UAH', // Added for Live Gold UAH
         'USD/MXN': 'OANDA:USD_MXN',
         'USD/ZAR': 'OANDA:USD_ZAR',
         'USD/HKD': 'OANDA:USD_HKD',
@@ -165,7 +166,7 @@ async function startSmartQueue() {
 
         // DYNAMIC RATES from Cache
         const tryRate = CACHE_STORE.forex.find(f => f.symbol === 'USD/TRY')?.price || 35.50;
-        const uahRate = CACHE_STORE.forex.find(f => (f.symbol === 'USD/UAH') || (f.symbol === 'USD/UAH'))?.price || 41.50;
+        const uahRate = CACHE_STORE.forex.find(f => f.symbol === 'USD/UAH')?.price || 41.50;
 
         const processed = Object.keys(CACHE_STORE.raw_commodities).map(name => {
             const raw = CACHE_STORE.raw_commodities[name];
@@ -216,7 +217,7 @@ async function startSmartQueue() {
         // Seed Commodities
         Object.keys(CONFIG.commoditySymbols).forEach(name => {
             let p = 50.00;
-            if (name === 'Gold') p = 2650; // Spot USD
+            if (name === 'Gold') p = 2650;
             if (name === 'Silver') p = 31.50;
             if (name === 'Crude Oil (WTI)') p = 75.00;
             updateCache('commodities-raw', { name, price: p, change: 0.2 }, 'name');
@@ -229,6 +230,7 @@ async function startSmartQueue() {
             if (name.includes('TRY')) p = 35.50;
             if (name.includes('CNY')) p = 7.25;
             if (name.includes('MXN')) p = 20.10;
+            if (name === 'USD/UAH') p = 41.60;
             updateCache('forex', { symbol: name, price: p, change: 0.1 }, 'symbol');
         });
         console.log('🌱 Cache Seeded.');
