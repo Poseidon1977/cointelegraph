@@ -274,17 +274,37 @@ async function startSmartQueue() {
             })
         ]);
 
-        // Emergency Fallback if API fails
+        // --- EMERGENCY FALLBACK (GRANULAR) ---
+        // Check each category independently. If API failed for specific section, inject fallback.
+
         if (CACHE_STORE.crypto.length === 0) {
-            console.warn('⚠️ API Failed. Injecting Emergency Fallback Data.');
-            updateCache('crypto', { id: 'bitcoin', symbol: 'btc', name: 'Bitcoin', current_price: 95500.00, price_change_percentage_24h: 1.2 }, 'id');
-            updateCache('crypto', { id: 'ethereum', symbol: 'eth', name: 'Ethereum', current_price: 2850.50, price_change_percentage_24h: -0.5 }, 'id');
-            updateCache('stocks', { symbol: 'AAPL', price: 235.00, change: 0.8 }, 'symbol');
-            updateCache('commodities-raw', { name: 'Gold', price: 2750.00, change: 0.5 }, 'name');
-            // Force basic forex
+            console.warn('⚠️ Crypto API Failed. Injecting Fallback.');
+            updateCache('crypto', { id: 'bitcoin', symbol: 'btc', name: 'Bitcoin', current_price: 96500.00, price_change_percentage_24h: 1.2 }, 'id');
+            updateCache('crypto', { id: 'ethereum', symbol: 'eth', name: 'Ethereum', current_price: 3450.50, price_change_percentage_24h: -0.5 }, 'id');
+            updateCache('crypto', { id: 'solana', symbol: 'sol', name: 'Solana', current_price: 145.20, price_change_percentage_24h: 4.5 }, 'id');
+        }
+
+        if (CACHE_STORE.stocks.length === 0) {
+            console.warn('⚠️ Stock API Failed. Injecting Fallback.');
+            updateCache('stocks', { symbol: 'AAPL', price: 220.50, change: 1.5 }, 'symbol');
+            updateCache('stocks', { symbol: 'NVDA', price: 115.00, change: 2.1 }, 'symbol');
+            updateCache('stocks', { symbol: 'TSLA', price: 250.00, change: -1.2 }, 'symbol');
+        }
+
+        if (Object.keys(CACHE_STORE.raw_commodities).length === 0) { // Check raw specifically
+            console.warn('⚠️ Commodity API Failed. Injecting Fallback.');
+            updateCache('commodities-raw', { name: 'Gold', price: 2650.00, change: 0.5 }, 'name');
+            updateCache('commodities-raw', { name: 'Silver', price: 31.50, change: -0.2 }, 'name');
+            updateCache('commodities-raw', { name: 'Crude Oil (WTI)', price: 75.20, change: 1.1 }, 'name');
+        }
+
+        if (CACHE_STORE.forex.length === 0) {
+            console.warn('⚠️ Forex API Failed. Injecting Fallback.');
             updateCache('forex', { symbol: 'EUR/USD', price: 1.0850, change: 0.1 }, 'symbol');
             updateCache('forex', { symbol: 'USD/TRY', price: 35.50, change: 0.2 }, 'symbol');
+            updateCache('forex', { symbol: 'GBP/USD', price: 1.2700, change: 0.3 }, 'symbol');
         }
+
         console.log('✅ Safe Hot Start Complete.');
     }
 
