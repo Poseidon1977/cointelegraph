@@ -111,19 +111,6 @@ const CONFIG = {
     }
 };
 
-const previousPrices = new Map();
-function smoothPrice(id, newPrice) {
-    const oldPrice = previousPrices.get(id);
-    if (!oldPrice) {
-        previousPrices.set(id, newPrice);
-        return newPrice;
-    }
-    const changePercent = Math.abs((newPrice - oldPrice) / oldPrice) * 100;
-    if (changePercent < 0.02) return oldPrice;
-    previousPrices.set(id, newPrice);
-    return newPrice;
-}
-
 // --- SMART QUEUE ENGINE ---
 async function startSmartQueue() {
     console.log('🚂 Starting Smart Sequential Queue...');
@@ -140,10 +127,13 @@ async function startSmartQueue() {
         const list = CACHE_STORE[category];
         const index = list.findIndex(x => x[keyField] === item[keyField]);
         if (index >= 0) {
-            list[index] = item;
+            list[index] = { ...list[index], ...item };
         } else {
             list.push(item);
         }
+
+        // If we updated forex, re-process commodities to sync TRY/UAH prices
+        if (category === 'forex') processCommodities();
     };
 
     const processCommodities = async () => {
@@ -198,15 +188,15 @@ async function startSmartQueue() {
         console.log('🌱 Seeding Cache with Realistic Data...');
 
         const defaults = {
-            'bitcoin': 96500, 'ethereum': 3500, 'solana': 148, 'binancecoin': 605,
-            'ripple': 2.45, 'cardano': 0.85, 'dogecoin': 0.35, 'polkadot': 7.50
+            'bitcoin': 102000, 'ethereum': 2800, 'solana': 235, 'binancecoin': 710,
+            'ripple': 2.30, 'cardano': 0.85, 'dogecoin': 0.35, 'polkadot': 7.50
         };
 
         // Seed Crypto
         Object.keys(CONFIG.cryptoMapping).forEach(id => {
             const map = CONFIG.cryptoMapping[id];
             const price = defaults[id] || 15.00;
-            updateCache('crypto', { id, symbol: map.short.toLowerCase(), name: map.name, current_price: price, price_change_percentage_24h: 0.1 }, 'id');
+            updateCache('crypto', { id, symbol: map.short.toLowerCase(), name: map.name, current_price: price, price_change_percentage_24h: 0.01 }, 'id');
         });
 
         // Seed Stocks
@@ -241,18 +231,18 @@ async function startSmartQueue() {
         // 2. SEED COMMODITIES (Now has access to Forex rates)
         Object.keys(CONFIG.commoditySymbols).forEach(name => {
             let p = 50.00;
-            if (name === 'Gold') p = 5150;
-            if (name === 'Silver') p = 55.50;
-            if (name === 'Platinum') p = 1200.00;
-            if (name === 'Palladium') p = 1150.00;
-            if (name === 'Copper') p = 9500.00;
-            if (name === 'Crude Oil (WTI)') p = 85.00;
-            if (name === 'Brent Oil') p = 88.00;
-            if (name === 'Natural Gas') p = 3.50;
-            if (name === 'Wheat') p = 650.00;
-            if (name === 'Corn') p = 480.00;
-            if (name === 'Sugar') p = 22.00;
-            updateCache('commodities-raw', { name, price: p, change: 0.2 }, 'name');
+            if (name === 'Gold') p = 2650;
+            if (name === 'Silver') p = 31.50;
+            if (name === 'Platinum') p = 950.00;
+            if (name === 'Palladium') p = 1050.00;
+            if (name === 'Copper') p = 8800.00;
+            if (name === 'Crude Oil (WTI)') p = 72.00;
+            if (name === 'Brent Oil') p = 76.00;
+            if (name === 'Natural Gas') p = 2.80;
+            if (name === 'Wheat') p = 580.00;
+            if (name === 'Corn') p = 430.00;
+            if (name === 'Sugar') p = 21.00;
+            updateCache('commodities-raw', { name, price: p, change: 0.05 }, 'name');
         });
 
         console.log('🌱 Cache Seeded.');
@@ -356,7 +346,7 @@ async function startSmartQueue() {
         const task = taskQueue[taskIndex];
         if (task) await task();
         taskIndex++;
-        setTimeout(executeNext, 800);
+        setTimeout(executeNext, 1100);
     };
 
     executeNext(); // Start loop

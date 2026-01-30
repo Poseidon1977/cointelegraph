@@ -443,7 +443,11 @@ async function fetchMarketData(isRefresh = false) {
     const grid = document.getElementById(`${view}-grid`) || document.getElementById('crypto-grid');
 
     if (isRefresh) {
-        grid.querySelectorAll('.asset-card').forEach(card => card.classList.add('updated-flash'));
+        grid.querySelectorAll('.asset-card').forEach(card => {
+            card.classList.remove('updated-flash');
+            void card.offsetWidth; // Trigger reflow
+            card.classList.add('updated-flash');
+        });
     }
 
     try {
@@ -467,10 +471,10 @@ async function fetchMarketData(isRefresh = false) {
             renderView(view, data);
 
             // Update "Last Updated" text
-            const lastUpdateEl = document.getElementById('label-last-updated');
-            if (lastUpdateEl) {
+            const timeEl = document.getElementById('last-updated-time');
+            if (timeEl) {
                 const now = new Date().toLocaleTimeString();
-                lastUpdateEl.innerText = `${t('last_updated')}: ${now}`;
+                timeEl.innerText = now;
             }
         }
     } catch (e) {
@@ -480,9 +484,9 @@ async function fetchMarketData(isRefresh = false) {
 }
 
 function renderView(view, data) {
-    const gridId = view === 'dashboard' ? 'crypto-grid' : `${view}-grid`;
+    const gridId = (view === 'dashboard' || !view) ? 'crypto-grid' : `${view}-grid`;
     const grid = document.getElementById(gridId);
-    if (!grid) return;
+    if (!grid || !data) return; // Silent return if no grid or data yet
 
     if (view === 'commodities') {
         renderCommodities(grid, data);
@@ -537,16 +541,18 @@ function updateAssetCard(card, view, item) {
     let price = '', change = 0;
 
     if (view === 'dashboard') {
-        price = `$${item.current_price?.toLocaleString()}`;
+        const val = item.current_price || 0;
+        price = val < 1.0 ? `$${val.toFixed(4)}` : `$${val.toLocaleString()}`;
         change = item.price_change_percentage_24h || 0;
     } else if (view === 'stocks') {
-        price = `$${item.price?.toFixed(2)}`;
+        price = `$${(item.price || 0).toFixed(2)}`;
         change = item.change || 0;
     } else if (view === 'forex') {
-        price = item.price?.toFixed(4);
+        price = (item.price || 0).toFixed(5);
         change = item.change || 0;
     } else if (view === 'commodities') {
-        price = `$${item.current_price?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        const val = item.current_price || 0;
+        price = `$${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         change = item.price_change_percentage_24h || 0;
     }
 

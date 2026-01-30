@@ -903,4 +903,21 @@ body {
         padding: 4px;
         flex: 1;
     }
+
+    /* Pulse Animation for Updates */
+    @keyframes pulse-update {
+        0% {
+            background-color: rgba(61, 90, 254, 0.2);
+            transform: scale(1.02);
+        }
+
+        100% {
+            background-color: transparent;
+            transform: scale(1);
+        }
+    }
+
+    .updated-flash {
+        animation: pulse-update 0.6s ease-out;
+    }
 }
