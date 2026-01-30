@@ -346,7 +346,7 @@ async function startSmartQueue() {
         const task = taskQueue[taskIndex];
         if (task) await task();
         taskIndex++;
-        setTimeout(executeNext, 1100);
+        setTimeout(executeNext, 400);
     };
 
     executeNext(); // Start loop

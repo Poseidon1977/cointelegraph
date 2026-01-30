@@ -471,11 +471,10 @@ async function fetchMarketData(isRefresh = false) {
             renderView(view, data);
 
             // Update "Last Updated" text
+            const syncEl = document.getElementById('label-sync-status');
             const timeEl = document.getElementById('last-updated-time');
-            if (timeEl) {
-                const now = new Date().toLocaleTimeString();
-                timeEl.innerText = now;
-            }
+            if (syncEl) syncEl.innerText = t('last_updated');
+            if (timeEl) timeEl.innerText = new Date().toLocaleTimeString();
         }
     } catch (e) {
         console.warn(`Fetch error for ${view}:`, e);

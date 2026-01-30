@@ -306,7 +306,7 @@ function updateUILanguage() {
             'set-title': 'preferences',
             'label-amount': 'label_amount',
             'res-label': 'res_label',
-            'label-last-updated': 'last_updated'
+            'label-sync-status': 'last_updated'
         };
 
         Object.entries(staticMap).forEach(([id, key]) => {
